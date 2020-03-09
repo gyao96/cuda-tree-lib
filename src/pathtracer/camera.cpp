@@ -194,6 +194,7 @@ void Camera::load_settings(string filename) {
  * \param x x-coordinate of the pixel in normalized image space
  * \param y y-coordinate of the pixel in normalized image space
  */
+inline double to_radian(double deg) { return deg * (M_PI / 180.0); }
 Ray Camera::generate_ray(double x, double y) const {
 
   // TODO (Part 1.2):
@@ -202,7 +203,12 @@ Ray Camera::generate_ray(double x, double y) const {
   // Note: hFov and vFov are in degrees.
   //
 
-  return Ray(pos, Vector3D(0, 0, -1));
+    Vector3D sensorPos((x - 0.5) * tan(to_radian(hFov)), (y - 0.5) * tan(to_radian(vFov)), -1);
+    Vector3D sensorPosGlobal = c2w * sensorPos;
+    Ray ray(pos, sensorPosGlobal);
+    ray.max_t = fClip;
+    ray.min_t = nClip;
+    return ray;
 }
 
 
