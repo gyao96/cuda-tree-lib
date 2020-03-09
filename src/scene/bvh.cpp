@@ -50,7 +50,7 @@ void BVHAccel::drawOutline(BVHNode *node, const Color &c, float alpha) const {
 
 BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
                                  std::vector<Primitive *>::iterator end,
-                                 size_t max_leaf_size) {
+                                 size_t max_leaf_size, size_t level) {
 
   // TODO (Part 2.1):
   // Construct a BVH from the given vector of primitives and maximum leaf
@@ -59,17 +59,66 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
   // primitives.
 
   BBox bbox;
-
+  int nodeEleCount = 0;
+  Vector3D avgCentroid(0.0);
   for (auto p = start; p != end; p++) {
     BBox bb = (*p)->get_bbox();
     bbox.expand(bb);
+    avgCentroid += bb.centroid();
+    nodeEleCount++;
   }
-
   BVHNode *node = new BVHNode(bbox);
-  node->start = start;
-  node->end = end;
+  if (nodeEleCount <= max_leaf_size)
+  {
+      node->start = start;
+      node->end = end;
 
-  return node;
+      return node;
+  }
+  else
+  {
+      avgCentroid /= nodeEleCount;
+      int key = level % 3;
+      std::vector<Primitive*>::iterator split_iter;
+      if (key == 0)
+      {
+          split_iter = std::partition(start, end, [avgCentroid](const Primitive* ele)
+              {
+                  return ele->get_bbox().centroid().x < avgCentroid.x;
+              });
+      }
+      else if (key == 1)
+      {
+          split_iter = std::partition(start, end, [avgCentroid](const Primitive* ele)
+              {
+                  return ele->get_bbox().centroid().y < avgCentroid.y;
+              });
+      }
+      else if (key == 2)
+      {
+          split_iter = std::partition(start, end, [avgCentroid](const Primitive* ele)
+              {
+                  return ele->get_bbox().centroid().z < avgCentroid.z;
+              });
+      }
+      else
+      {
+          perror("Exceed partition switch bound\n");
+      }
+      
+      if (end - split_iter <= 0)
+      {
+          split_iter--;
+      }
+      else if (split_iter - start <= 0)
+      {
+          split_iter++;
+      }
+      assert(end - split_iter > 0 && split_iter - start > 0);
+      node->l = construct_bvh(start, split_iter, max_leaf_size, level + 1);
+      node->r = construct_bvh(split_iter, end, max_leaf_size, level + 1);
+      return node;
+  }
 }
 
 bool BVHAccel::has_intersection(const Ray &ray, BVHNode *node) const {

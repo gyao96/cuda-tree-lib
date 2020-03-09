@@ -5,6 +5,7 @@
 #include "aggregate.h"
 
 #include <vector>
+#include <functional>
 
 namespace CGL { namespace SceneObjects {
 
@@ -138,7 +139,7 @@ class BVHAccel : public Aggregate {
 private:
   std::vector<Primitive*> primitives;
   BVHNode* root; ///< root node of the BVH
-  BVHNode *construct_bvh(std::vector<Primitive*>::iterator start, std::vector<Primitive*>::iterator end, size_t max_leaf_size);
+  BVHNode *construct_bvh(std::vector<Primitive*>::iterator start, std::vector<Primitive*>::iterator end, size_t max_leaf_size, size_t level = 0);
 };
 
 } // namespace SceneObjects
