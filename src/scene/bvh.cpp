@@ -143,19 +143,13 @@ bool BVHAccel::has_intersection(const Ray &ray, BVHNode *node) const {
     bool hit1 = has_intersection(ray, node->l);
     bool hit2 = has_intersection(ray, node->r);
     return hit1 || hit2;
-  //for (auto p : primitives) {
-  //  total_isects++;
-  //  if (p->has_intersection(ray))
-  //    return true;
-  //}
-  //return false;
+
 }
 
 bool BVHAccel::intersect(const Ray &ray, Intersection *i, BVHNode *node) const {
   // TODO (Part 2.3):
   // Fill in the intersect function.
     double t0, t1;
-    //i->t = ray.max_t;
     if (!node->bb.intersect(ray, t0, t1))
         return false;
     if (node->isLeaf())
@@ -171,12 +165,6 @@ bool BVHAccel::intersect(const Ray &ray, Intersection *i, BVHNode *node) const {
     bool hit1 = intersect(ray, i, node->l);
     bool hit2 = intersect(ray, i, node->r);
     return hit1 || hit2;
-  //bool hit = false;
-  //for (auto p : primitives) {
-  //  total_isects++;
-  //  hit = p->intersect(ray, i) || hit;
-  //}
-  //return hit; 
 }
 
 } // namespace SceneObjects
