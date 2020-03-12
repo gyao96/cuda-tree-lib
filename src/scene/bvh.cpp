@@ -75,8 +75,7 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
 
       return node;
   }
-  else
-  {
+  
       avgCentroid /= nodeEleCount;
       int key = level % 3;
       std::vector<Primitive*>::iterator split_iter;
@@ -118,7 +117,6 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
       node->l = construct_bvh(start, split_iter, max_leaf_size, level + 1);
       node->r = construct_bvh(split_iter, end, max_leaf_size, level + 1);
       return node;
-  }
 }
 
 bool BVHAccel::has_intersection(const Ray &ray, BVHNode *node) const {

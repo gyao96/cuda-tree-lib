@@ -70,8 +70,21 @@ PathTracer::estimate_direct_lighting_hemisphere(const Ray &r,
   // TODO (Part 3): Write your sampling loop here
   // TODO BEFORE YOU BEGIN
   // UPDATE `est_radiance_global_illumination` to return direct lighting instead of normal shading 
+  for (size_t i = 0; i < num_samples; i++)
+  {
+      Vector3D w_in = hemisphereSampler->get_sample();  // in local space, as is w_out
+      Vector3D w_in_global = o2w * w_in;
+      Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
+      Intersection hit_light;
+      if (bvh->intersect(ri, &hit_light))
+      {
+          double pdf = 1.0 / (2 * PI);
+          double costheta = w_in.z; // cos(theta) = (0,0,1) dot w_in
+          L_out += hit_light.bsdf->get_emission() * isect.bsdf->f(w_out, w_in) * costheta / pdf;
+      }
+  }
 
-  return Spectrum(1.0);
+  return L_out / num_samples;
 }
 
 Spectrum
@@ -101,7 +114,7 @@ Spectrum PathTracer::zero_bounce_radiance(const Ray &r,
   // TODO: Part 3, Task 2
   // Returns the light that results from no bounces of light
 
-  return Spectrum(1.0);
+  return isect.bsdf->get_emission();
 }
 
 Spectrum PathTracer::one_bounce_radiance(const Ray &r,
@@ -110,7 +123,7 @@ Spectrum PathTracer::one_bounce_radiance(const Ray &r,
   // Returns either the direct illumination by hemisphere or importance sampling
   // depending on `direct_hemisphere_sample`
 
-  return Spectrum(1.0);
+  return estimate_direct_lighting_hemisphere(r, isect);
 }
 
 Spectrum PathTracer::at_least_one_bounce_radiance(const Ray &r,
@@ -143,11 +156,12 @@ Spectrum PathTracer::est_radiance_global_illumination(const Ray &r) {
   // been implemented.
 
   // REMOVE THIS LINE when you are ready to begin Part 3.
-  L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
+  // L_out = (isect.t == INF_D) ? debug_shading(r.d) : normal_shading(isect.n);
 
   // TODO (Part 3): Return the direct illumination.
-
+  L_out += zero_bounce_radiance(r, isect);
   // TODO (Part 4): Accumulate the "direct" and "indirect"
+  L_out += one_bounce_radiance(r, isect);
   // parts of global illumination into L_out rather than just direct
 
   return L_out;
