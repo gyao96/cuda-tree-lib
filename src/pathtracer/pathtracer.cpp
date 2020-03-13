@@ -106,7 +106,47 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
   const Vector3D &w_out = w2o * (-r.d);
   Spectrum L_out;
 
-  return Spectrum(1.0);
+    Vector3D w_in_global;
+    float distToLight;
+    float pdf;
+    for (const SceneLight *light: scene->lights)
+    {
+        if (light->is_delta_light())
+        {
+            Spectrum pRadiance = light->sample_L(hit_p, &w_in_global, &distToLight, &pdf);
+            Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
+            ri.max_t = distToLight;
+            Intersection shadow_ray;
+            if (dot(isect.n, w_in_global) > 0 && (!bvh->intersect(ri, &shadow_ray) || shadow_ray.t <= distToLight - EPS_D))
+            {
+                Vector3D w_in = w2o * w_in_global;
+                double costheta = w_in.z;
+                L_out += pRadiance * isect.bsdf->f(w_out, w_in) * costheta / pdf;
+            }
+        }
+        else
+        {
+            Spectrum L_area;
+            for (size_t i = 0; i < ns_area_light; i++)
+            {
+                Spectrum pRadiance = light->sample_L(hit_p, &w_in_global, &distToLight, &pdf);
+                Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
+                ri.max_t = distToLight;
+                Intersection shadow_ray;
+                if (dot(isect.n, w_in_global) > 0 && (!bvh->intersect(ri, &shadow_ray) || shadow_ray.t <= distToLight - EPS_D))
+                {
+                    Vector3D w_in = w2o * w_in_global;
+                    double costheta = w_in.z;
+                    L_area += pRadiance * isect.bsdf->f(w_out, w_in) * costheta / pdf;
+                }
+            }
+            L_area /= ns_area_light;
+            L_out += L_area;
+        }
+    }
+    L_out /= scene->lights.size();
+
+  return L_out;
 }
 
 Spectrum PathTracer::zero_bounce_radiance(const Ray &r,
@@ -123,7 +163,11 @@ Spectrum PathTracer::one_bounce_radiance(const Ray &r,
   // Returns either the direct illumination by hemisphere or importance sampling
   // depending on `direct_hemisphere_sample`
 
-  return estimate_direct_lighting_hemisphere(r, isect);
+    if (direct_hemisphere_sample)
+        return estimate_direct_lighting_hemisphere(r, isect);
+    else
+        return estimate_direct_lighting_importance(r, isect);
+
 }
 
 Spectrum PathTracer::at_least_one_bounce_radiance(const Ray &r,
