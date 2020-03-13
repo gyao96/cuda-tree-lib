@@ -194,7 +194,7 @@ void Camera::load_settings(string filename) {
  * \param x x-coordinate of the pixel in normalized image space
  * \param y y-coordinate of the pixel in normalized image space
  */
-inline double to_radian(double deg) { return deg * (M_PI / 180.0); }
+inline double to_radian(double deg) { return deg * (PI / 180.0); }
 Ray Camera::generate_ray(double x, double y) const {
 
   // TODO (Part 1.2):
