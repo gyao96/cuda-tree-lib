@@ -117,7 +117,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
             Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
             ri.max_t = distToLight;
             Intersection shadow_ray;
-            if (dot(isect.n, w_in_global) > 0 && (!bvh->intersect(ri, &shadow_ray) || shadow_ray.t <= distToLight - EPS_D))
+            if (dot(isect.n, w_in_global) > 0 && (!bvh->has_intersection(ri)))
             {
                 Vector3D w_in = w2o * w_in_global;
                 double costheta = w_in.z;
@@ -133,18 +133,16 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
                 Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
                 ri.max_t = distToLight;
                 Intersection shadow_ray;
-                if (dot(isect.n, w_in_global) > 0 && (!bvh->intersect(ri, &shadow_ray) || shadow_ray.t <= distToLight - EPS_D))
+                if (dot(isect.n, w_in_global) > 0 && (!bvh->has_intersection(ri)))
                 {
                     Vector3D w_in = w2o * w_in_global;
                     double costheta = w_in.z;
                     L_area += pRadiance * isect.bsdf->f(w_out, w_in) * costheta / pdf;
                 }
             }
-            L_area /= ns_area_light;
-            L_out += L_area;
+            L_out += (L_area / ns_area_light);
         }
     }
-    L_out /= scene->lights.size();
 
   return L_out;
 }
@@ -179,7 +177,20 @@ Spectrum PathTracer::at_least_one_bounce_radiance(const Ray &r,
   Vector3D hit_p = r.o + r.d * isect.t;
   Vector3D w_out = w2o * (-r.d);
 
-  Spectrum L_out(0, 0, 0);
+  Spectrum L_out = one_bounce_radiance(r, isect);
+  Vector3D w_in;
+  float pdf;
+  Spectrum irr = isect.bsdf->sample_f(w_out, &w_in, &pdf);
+  Vector3D w_in_global = o2w * w_in;
+  Intersection next_isect;
+  Ray s_ray(hit_p + EPS_D * w_in_global, w_in_global);
+  s_ray.depth = r.depth - 1;
+  bool hit = bvh->intersect(s_ray, &next_isect);
+  double cpdf = 0.7;
+  if (r.depth > 0 && hit && coin_flip(cpdf))
+  {
+      L_out += at_least_one_bounce_radiance(s_ray, next_isect) * irr * cos_theta(w_in) / pdf / cpdf;
+  }
 
   return L_out;
 }
@@ -205,9 +216,9 @@ Spectrum PathTracer::est_radiance_global_illumination(const Ray &r) {
   // TODO (Part 3): Return the direct illumination.
   L_out += zero_bounce_radiance(r, isect);
   // TODO (Part 4): Accumulate the "direct" and "indirect"
-  L_out += one_bounce_radiance(r, isect);
+  // L_out += one_bounce_radiance(r, isect);
   // parts of global illumination into L_out rather than just direct
-
+  L_out += at_least_one_bounce_radiance(r, isect);
   return L_out;
 }
 
@@ -229,7 +240,11 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   Spectrum avg_spectrum(0.0);
   for (size_t i = 0; i < num_samples; i++)
   {
-      Ray sample_ray = camera->generate_ray(norm_origin.x, norm_origin.y);
+      Vector2D sample = gridSampler->get_sample();
+      double normx = double(x + sample.x) / sampleBuffer.w; 
+      double normy = double(y + sample.y) / sampleBuffer.h;
+      Ray sample_ray = camera->generate_ray(normx, normy);
+      sample_ray.depth = max_ray_depth;
       avg_spectrum += est_radiance_global_illumination(sample_ray);
   }
   avg_spectrum /= num_samples;

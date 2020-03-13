@@ -113,7 +113,7 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
       {
           split_iter++;
       }
-      assert(end - split_iter > 0 && split_iter - start > 0);
+      //assert(end - split_iter > 0 && split_iter - start > 0);
       node->l = construct_bvh(start, split_iter, max_leaf_size, level + 1);
       node->r = construct_bvh(split_iter, end, max_leaf_size, level + 1);
       return node;
@@ -137,6 +137,7 @@ bool BVHAccel::has_intersection(const Ray &ray, BVHNode *node) const {
                 return true;
             }
         }
+        return false;
     }
     bool hit1 = has_intersection(ray, node->l);
     bool hit2 = has_intersection(ray, node->r);
