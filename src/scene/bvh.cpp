@@ -83,7 +83,7 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
       {
           split_iter = std::partition(start, end, [avgCentroid](const Primitive* ele)
               {
-                  return ele->get_bbox().centroid().x < avgCentroid.x;
+                  return ele->get_bbox().centroid().z < avgCentroid.z;
               });
       }
       else if (key == 1)
@@ -97,7 +97,7 @@ BVHNode *BVHAccel::construct_bvh(std::vector<Primitive *>::iterator start,
       {
           split_iter = std::partition(start, end, [avgCentroid](const Primitive* ele)
               {
-                  return ele->get_bbox().centroid().z < avgCentroid.z;
+                  return ele->get_bbox().centroid().x < avgCentroid.x;
               });
       }
       else
