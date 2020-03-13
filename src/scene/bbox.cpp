@@ -29,6 +29,8 @@ bool BBox::intersect(const Ray& r, double& t0, double& t1) const {
     if (tminz > tmin) tmin = tminz;
     if (tmaxz < tmax) tmax = tmaxz;
 
+    if (tmin < 0 && tmax > 0) return true;
+    if (tmin > tmax) printf("ERROR\n");
     if (tmin > 0 || tmax > 0)
     {
         t0 = tmin > 0 ? tmin : 0;
