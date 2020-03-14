@@ -117,7 +117,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
             Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
             ri.max_t = distToLight;
             Intersection shadow_ray;
-            if (dot(isect.n, w_in_global) > 0 && (!bvh->has_intersection(ri)))
+            if (dot(isect.n, w_in_global) > -EPS_D && (!bvh->has_intersection(ri)))
             {
                 Vector3D w_in = w2o * w_in_global;
                 double costheta = w_in.z;
@@ -133,7 +133,7 @@ PathTracer::estimate_direct_lighting_importance(const Ray &r,
                 Ray ri(hit_p + EPS_D * w_in_global, w_in_global);
                 ri.max_t = distToLight;
                 Intersection shadow_ray;
-                if (dot(isect.n, w_in_global) > 0 && (!bvh->has_intersection(ri)))
+                if (dot(isect.n, w_in_global) > -EPS_D && (!bvh->has_intersection(ri)))
                 {
                     Vector3D w_in = w2o * w_in_global;
                     double costheta = w_in.z;
@@ -177,7 +177,9 @@ Spectrum PathTracer::at_least_one_bounce_radiance(const Ray &r,
   Vector3D hit_p = r.o + r.d * isect.t;
   Vector3D w_out = w2o * (-r.d);
 
-  Spectrum L_out = one_bounce_radiance(r, isect);
+  Spectrum L_out;
+  //if (r.depth < max_ray_depth)
+      L_out += one_bounce_radiance(r, isect);
   Vector3D w_in;
   float pdf;
   Spectrum irr = isect.bsdf->sample_f(w_out, &w_in, &pdf);

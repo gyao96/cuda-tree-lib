@@ -29,14 +29,28 @@ bool BBox::intersect(const Ray& r, double& t0, double& t1) const {
     if (tminz > tmin) tmin = tminz;
     if (tmaxz < tmax) tmax = tmaxz;
 
+    t0 = tmin > 0 ? tmin : 0;
+    t1 = tmax > 0 ? tmax : 0;
     if (tmin < 0 && tmax > 0) return true;
 
     if (tmin > 0 || tmax > 0)
     {
-        t0 = tmin > 0 ? tmin : 0;
-        t1 = tmax > 0 ? tmax : 0;
         return tmin > r.min_t || tmax < r.max_t;
     }
+    //if (tmin < 0)
+    //{
+    //    if (tmax > 0)
+    //    {
+    //        t0 = tmax; t1 = tmax;
+    //        return tmax < r.max_t;
+    //    }
+    //}
+    //else
+    //{
+    //    if (tmax < 0) printf("ERROR\n");
+    //    t0 = tmin; t1 = tmax;
+    //    return tmin > r.min_t || tmax < r.max_t;
+    //}
     return false;
 }
 
