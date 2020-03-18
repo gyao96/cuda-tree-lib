@@ -239,40 +239,40 @@ void PathTracer::raytrace_pixel(size_t x, size_t y) {
   Vector2D norm_origin(origin.x / sampleBuffer.w, origin.y / sampleBuffer.h);
   Spectrum avg_spectrum(0.0);
 
-  //float s1 = 0., s2 = 0.;
-  //size_t i;
-  //for (i = 0; i < num_samples; i++)
-  //{
-  //    Vector2D sample = gridSampler->get_sample();
-  //    double normx = double(x + sample.x) / sampleBuffer.w;
-  //    double normy = double(y + sample.y) / sampleBuffer.h;
-  //    Ray sample_ray = camera->generate_ray(normx, normy);
-  //    sample_ray.depth = max_ray_depth;
-  //    Spectrum ill = est_radiance_global_illumination(sample_ray);
-  //    avg_spectrum += ill;
-  //    s1 += ill.illum();
-  //    s2 += ill.illum() * ill.illum();
-  //    if ((i + 1) % samplesPerBatch == 0)
-  //    {
-  //        float miu = s1 / (i + 1);
-  //        float sigma2 = (s2 - s1 * s1 / (i + 1)) / i;
-  //        if (1.96 * sqrt(sigma2 / (i + 1)) <= maxTolerance * miu)
-  //        {
-  //            break;
-  //        }
-  //    }
-  //}
-  //num_samples = i + 1;
-  
-  for (size_t i = 0; i < num_samples; i++)
+  float s1 = 0., s2 = 0.;
+  size_t i;
+  for (i = 0; i < num_samples; i++)
   {
       Vector2D sample = gridSampler->get_sample();
       double normx = double(x + sample.x) / sampleBuffer.w;
       double normy = double(y + sample.y) / sampleBuffer.h;
       Ray sample_ray = camera->generate_ray(normx, normy);
       sample_ray.depth = max_ray_depth;
-      avg_spectrum += est_radiance_global_illumination(sample_ray);
+      Spectrum ill = est_radiance_global_illumination(sample_ray);
+      avg_spectrum += ill;
+      s1 += ill.illum();
+      s2 += ill.illum() * ill.illum();
+      if ((i + 1) % samplesPerBatch == 0)
+      {
+          float miu = s1 / (i + 1);
+          float sigma2 = (s2 - s1 * s1 / (i + 1)) / i;
+          if (1.96 * sqrt(sigma2 / (i + 1)) <= maxTolerance * miu)
+          {
+              break;
+          }
+      }
   }
+  num_samples = i + 1;
+  
+  //for (size_t i = 0; i < num_samples; i++)
+  //{
+  //    Vector2D sample = gridSampler->get_sample();
+  //    double normx = double(x + sample.x) / sampleBuffer.w;
+  //    double normy = double(y + sample.y) / sampleBuffer.h;
+  //    Ray sample_ray = camera->generate_ray(normx, normy);
+  //    sample_ray.depth = max_ray_depth;
+  //    avg_spectrum += est_radiance_global_illumination(sample_ray);
+  //}
   
   
   avg_spectrum /= num_samples;
