@@ -2,6 +2,31 @@
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
 <head>
 <style>  
+    pre {
+            font-family: "Courier 10 Pitch", Courier, monospace;
+            font-size: 95%;
+            line-height: 140%;
+            white-space: pre;
+            white-space: pre-wrap;
+            white-space: -moz-pre-wrap;
+            white-space: -o-pre-wrap;
+        }          
+    code {
+        font-family: Monaco, Consolas, "Andale Mono", "DejaVu Sans Mono", monospace;
+        font-size: 95%;
+        line-height: 140%;
+        white-space: pre;
+        white-space: pre-wrap;
+        white-space: -moz-pre-wrap;
+        white-space: -o-pre-wrap;
+        background: #faf8f0;
+    }
+  .center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+  }
     div.padded {  
       padding-top: 0px;  
       padding-right: 100px;  
@@ -9,28 +34,48 @@
       padding-left: 100px;  
     }  
   </style> 
-<title>Your Name  |  CS 184</title>
+<title>Gang Yao  |  CS 184</title>
 <meta http-equiv="content-type" content="text/html; charset=utf-8" />
 <link rel="stylesheet" type="text/css" href="style.css" media="screen" />
 </head>
 <body>
 <br />
 <h1 align="middle">Assignment 3: PathTracer</h1>
-    <h2 align="middle">Your Name</h2>
+    <h2 align="middle">Gang Yao</h2>
 
     <div class="padded">
-        <p>Use this section to write an overview of the assignment. All of the text in your write-up should be <em>in your own words</em>. If you need to add additional HTML features to this document, you can search the <a href="http://www.w3schools.com/">http://www.w3schools.com/</a> website for instructions. To edit the HTML, you can just copy and paste existing chunks and fill in the text and image file names appropriately.</p>
-        <o>The website writeup is intended to be a self-contained walkthrough of the assignment: we want this to be a piece of work which showcases your understanding of relevant concepts through both mesh images as well as written explanations about what you did to complete each part of the assignment. Try to be as clear and organized as possible when writing about your own output files or extensions to the assignment. We want to understand what you've achieved and how you've done it!</p> 
-        <p>If you are well-versed in web development, feel free to ditch this template and make a better looking page. Just make sure that you include all the components as we've laid them out here. </p>
+        <p>In this assignment, I built a pathtracer for rendering realistic pictures that complies with physical laws. This includes supersampling rays for a single pixel in camera space, direct and indirect lighting evaluation and recursive ray-tracing. It currently only supports diffuse lambertian materials with area and point lighting. </p> 
 
     <h2 align="middle">Part 1: Ray Generation and Intersection</h2>
-        <p>Describe what you did in Part 1. etc...</p>
+        <p>In part 1, we start off by building ray-tracing support for our camera frame. In order to render a pixel, we generate <code>ns_aa</code> number of random points that lies between <code>[x, x+1]</code> and <code>[y, y+1]</code>. Then connecting the camera origin and those points would give us sample rays. We just need to keep in mind that we need to convert points in camera space to world space by multiplying matrix <code>c2w</code>.</p>
+        <p>To generate camera rays, we image a virtual plane sitting perpendicular to the X-Y plane at (0, 0, -1) in the camera space. <code>hFov</code> and <code>vFov</code> represents the tangent boundary of the camera plane. A ray starting from (0, 0, 0) to (x, y, -1) that sits inside rectangle <code>[+-tan(0.5*hFov), +-tan(0.5*vFov)]</code> will be shot as a valid ray. Then we just need to convert it into world space and assign the current cliping distance.</p>
+        <p>Any point on a ray can be represented as <code>pRay = o+t*d</code> and any point on a triangle plane could be represented as <code>pTri = b1*AB + b2*AC</code>(barycentric coordinates). To determine if a ray intersects with a triangle, we are essentially solving for <code>t, b1, b2</code> such that <code>pTri == pRay</code>, which can be calculate using Moller Trumbore algorithm. Once we have <code>t, b1, b2</code>, we then test if <code>t</code> lies in between <code>ray.min_t</code> and <code>ray.max_t</code> and if <code>b1, b2</code> satisfy the barycentric constraints to put the intesect point inside the triangle.</p>
+        <p>For ray intersecting with spheres, we just need to check if the distance from center of the sphere to the ray is smaller than sphere radius. If so, we solve for the two solutions of t such that a point on the ray also lies on the sphere. Then we take the smaller t that satisfies <code> ray.min_t <= t <= ray.max_t</code> as the ray intersection.</p>
         <div align="center">
             <table style="width=100%">
                 <tr>
                     <td align="middle">
-                    <img src="images/example_image.png" width="480px" />
-                    <figcaption align="middle">Results Caption: my bunny is the bounciest bunny</figcaption>
+                    <img src="images/camera.png" width="480px" />
+                    <figcaption align="middle">Camera Coordinate Transform</figcaption>
+                    <td align="middle">
+                    <img src="images/mtalgo.png" width="480px" />
+                    <figcaption align="middle">Moller Trumbore Algorithm</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/CBspheresNormal.png" width="480px" />
+                    <figcaption align="middle">Ray intersect with Triangle and Sphere Primitives</figcaption>
+                    <td align="middle">
+                    <img src="images/CBcoilNormal.png" width="480px" />
+                    <figcaption align="middle">Normal Shading - Coil</figcaption>
+                </tr>
+                <tr>
+                    <td align="middle">
+                    <img src="images/teapotNormal.png" width="480px" />
+                    <figcaption align="middle">Normal Shading - Teapot</figcaption>
+                    <td align="middle">
+                    <img src="images/bananaNormal.png" width="480px" />
+                    <figcaption align="middle">Normal Shading - Banana</figcaption>
                 </tr>
             </table>
         </div>
@@ -39,18 +84,214 @@
         <p>or, alternatively, you can include an SVG image of a LaTex formula.</p>
         <p>This time it's your job to copy-paste in the rest of the sections :)</p>
 
+    <h2 align="middle">Part 2: Bounding Volume Hierarchy</h2>
+    <p>If we are iterating over all the primitives while tracing a single ray, even the simple scene would take a long time to render. In part 2, we construct a bounding volume hierarchy, aka BVH tree, to accelerate the process. There are two types of nodes in the BVH tree, the root nodes and the leaf nodes. The root nodes contains only a bounding box member and must have two root node children or leaf node children. A leaf node has a bounding box member and a list of primitives. To construct the BVH tree, we start from the entire list of primitives and the root node. If the size of the list is smaller than <code>max_element_allowed</code>, then we construct the current node as a leaf node. Otherwise, we partition the list into two part according to some heuristic, and recursivly construct the left and right subtree with these two parts.</p>
+    <p>The partition heuristic I chose is to first find the average centriod of all the primitives in the list, then choose the axis to partition against based on the recursive level. I used <code>std::partition</code> to partition the list. This function reorders the list so that the returning iterater partition the list into right and left parts according to the comparator I passed in. I also check if the two sub parts are not empty, whenever I find an empty list I just put an element in the other part into this part and do recursive calls on these two parts.</p>
+    <p><b>Extra Point:</b> I only store a single large vector in BVH. All leaf nodes only gets assigned a start and end iterator that points to places in the big vector. During every level of recursion, <code>std::partition</code> reorders the big vector in O(logN) time then generates a split point iterate that is passed to the left sub node as <code>end</code> and right sub node as <code>start</code>. This should only take up only O(N) space compared to if we are storing a new vector for every node, which is O(NlogN) space.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/bvhall.png" width="480px" />
+                <figcaption align="middle">BVH - Root Node</figcaption>
+                <td align="middle">
+                <img src="images/bvhsmall.png" width="480px" />
+                <figcaption align="middle">BVH - Subroot Node</figcaption>
+            </tr>
+            <tr>
+                <td align="middle">
+                <img src="images/CBlucy.png" width="480px" />
+                <figcaption align="middle">Lucy - 1.5423 second</figcaption>
+                <td align="middle">
+                <img src="images/planck.png" width="480px" />
+                <figcaption align="middle">Max Planck - 0.8762 second</figcaption>
+            </tr>
+        </table>
+    </div>
+    <p>On a hive machine, rendering the cow image with normal shading at the front view takes 43.2314 seconds without BVH acceleration and only 0.1203 seconds with BVH acceleration. With the BVH tree constructed, we just need to traverse the tree to find the closest tree node that intersects with a ray, cutting down the search time from O(N) to O(logN). The partition heuristic that we choose also has a huge impact. Ideally, the constructed tree should have a balanced shape, so that we still just need to recurse O(logN) layers to find the hit leaf node. But if the tree is very deep and unbalanced, we could end up with worst O(N) time search still.</p>
 
+    <h2 align="middle">Part 3: Direct Illumination</h2>
+    <p>For a ray from camera, if it hit the light source directly, then this pixel is immediately assigned the emitted radiance of the light source. If the ray bounced one time onto one surface in the scene, then goes off to the light source, we consider this surface point "directly illuminated".For this assignment, we only support diffuse material, meaning that the surface BRDF reflects light to all directions equally in the hemisphere.</p>
+    <h3>Direct Lighting with Uniform hemisphere Sampling</h3>
+    <p>For uniform hemisphere sampling, we sampling from the entire hemisphere space of the surface intersect point <code>hit_p</code>. The refection direction is arbitrary, and thus whether the reflected ray at direction <code>w_in</code> hits the light source is completely by chance. This means we can only increase the number of samples for an intersect to balance off the noise level. Also, to determine if a point is in shadow, we cast a shadow ray from <code>hit_p</code> to <code>w_in</code> and see if it intersect with bvh, which means that this point is blocked by another object.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/CBbunny_H_1_1.png" width="240px" />
+                <figcaption align="middle">1 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_H_1_4.png" width="240px" />
+                <figcaption align="middle">4 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_H_1_16.png" width="240px" />
+                <figcaption align="middle">16 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_H_1_64.png" width="240px" />
+                <figcaption align="middle">64 ray with 1 sample per pixel</figcaption>
+            </tr>
+        </table>
+    </div>
+    <h3>Direct Lighting by Importance Sampling Lights</h3>
+    <p>Sampling in the entire hemisphere can be costly and noisy, the more efficient way is sampling only in the direction of the light. For point lights, we only need to cast one ray from <code>hit_p</code> at direction <code>w_in</code>. If nothing blocks the ray, then it can reach the point light. For area lights, we sample in the area solid angle uniformly at <code>ns_aa</code> times and average them. Finally, we add together all the effects of lights to give the final lighting estimation.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/CBbunny_1_1.png" width="240px" />
+                <figcaption align="middle">1 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1_4.png" width="240px" />
+                <figcaption align="middle">4 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1_16.png" width="240px" />
+                <figcaption align="middle">16 ray with 1 sample per pixel</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1_64.png" width="240px" />
+                <figcaption align="middle">64 ray with 1 sample per pixel</figcaption>
+            </tr>
+        </table>
+    </div>
+    <h3>Comparison</h3>
+    <p>As the number of rays for one bounce increase, noise level reduce for both sampling method. But we see that the importance sampling method has a much better overall performance when compared to uniform hemisphere sampling. Especially when the number of rays is low. When sampling randomly in the hemisphere, whether the ray hits the light source or not is completely random, resulting in an image that is barely distinguishable. For importance sampling, since we are sampling only the light areas, a casted ray has a much larger chance of hitting the light source. The resulting image for importance sampling is much smoother, especially when we increase the number of ray samples per light.</p>
 
-    <h2 align="middle">A Few Notes On Webpages</h2>
-        <p>Here are a few problems students have encountered in the past. You will probably encounter these problems at some point, so don't wait until right before the deadline to check that everything is working. Test your website on the instructional machines early!</p>
-        <ul>
-        <li>Your main report page should be called index.html.</li>
-        <li>Be sure to include and turn in all of the other files (such as images) that are linked in your report!</li>
-        <li>Use only <em>relative</em> paths to files, such as <pre>"./images/image.jpg"</pre>
-        Do <em>NOT</em> use absolute paths, such as <pre>"/Users/student/Desktop/image.jpg"</pre></li>
-        <li>Pay close attention to your filename extensions. Remember that on UNIX systems (such as the instructional machines), capitalization matters. <pre>.png != .jpeg != .jpg != .JPG</pre>
-        <li>Be sure to adjust the permissions on your files so that they are world readable. For more information on this please see this tutorial: <a href="http://www.grymoire.com/Unix/Permissions.html">http://www.grymoire.com/Unix/Permissions.html</a></li>
-        <li>And again, test your website on the instructional machines early!</li>
+    <h2 align="middle">Part 4: Global Illumination</h2>
+    <p>Most of the visual richness comes from indirect illuminations, aka light that bounces more than once. The estimate global illumination function takes in a ray and an intersection. Unlike in part 3, now the intersect could be on any object in the scene that could emit or reflect lights. We recursively call <code>at_least_one_bounce_radiance</code> to estimate the overall radiance of an intersection. Since our function terminates by Russian Roulette, we randomly exits recursion at a given probability. We also limit our maximum level of recursion at a constant number from the commandline.</p>
+    <pre>
+        Spectrum L_out = one_bounce_radiance(r, isect);
+        ...
+        /* Generate w_in and pdf and calculate reflectance from Intersect::bsdf::sample_f */
+        ... 
+        /* Generate the next incoming ray for the next level of recurision */
+        next_isect = hit from next incoming ray ;
+        if (r.depth > 0 && bvh->intersect(s_ray, &next_isect) && coin_flip(cpdf)) // Random termination but not exceeding max level
+        {
+            L_out += at_least_one_bounce_radiance(s_ray, next_isect) * reflectance * cos_theta(w_in) / pdf / cpdf;
+        }
+        return L_out;
+    </pre>
+    <h3>Some pictures with global illumination - 1024 Samples 4 Rays 6 Ray depth</h3>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/bench_1024_4_6.png" width="240px" />
+                <figcaption align="middle">Bench</figcaption>
+                <td align="middle">
+                <img src="images/banana_1024_4_6.png" width="240px" />
+                <figcaption align="middle">Banana</figcaption>
+                <td align="middle">
+                <img src="images/building_1024_4_6.png" width="240px" />
+                <figcaption align="middle">Building</figcaption>
+                <td align="middle">
+                <img src="images/dragon_1024_4_6.png" width="240px" />
+                <figcaption align="middle">Dragon</figcaption>
+            </tr>
+        </table>
+    </div>
+    <h3>Direct and Indirect components - 1024 Samples per Pixel</h3>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/scene_sphere_direct.png" width="480px" />
+                <figcaption align="middle">Sphere with Only Direct Light</figcaption>
+                <td align="middle">
+                <img src="images/scene_sphere_indirect.png" width="480px" />
+                <figcaption align="middle">Sphere with Only Indirect Light</figcaption>
+                <td align="middle">
+            </tr>
+        </table>
+    </div>
+    <h3>Changing the <code>max_ray_depth</code> - 1024 Samples per Pixel 32 Rays Per Area Light</h3>
+    <p>When we increase the <code>max_ray_depth</code> the level of details also increase. Notice that there are more indirect lighting details rendered. However, this increase drops when <code>max_ray_depth</code> goes bigger. Because the deeper the level of recursion goes, the less significant will be effect be.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/CBbunny_1024_32_m0.png" width="240px" />
+                <figcaption align="middle">max_ray_depth 0</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1024_32_m1.png" width="240px" />
+                <figcaption align="middle">max_ray_depth 1</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1024_32_m2.png" width="240px" />
+                <figcaption align="middle">max_ray_depth 2</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1024_32_m3.png" width="240px" />
+                <figcaption align="middle">max_ray_depth 3</figcaption>
+                <td align="middle">
+                <img src="images/CBbunny_1024_32_m100.png" width="240px" />
+                <figcaption align="middle">max_ray_depth 100</figcaption>
+                <td align="middle">
+                </tr>
+        </table>
+    </div>
+
+    <h3>Changint the sample rate - 4 Rays per Area Light, Importance Sampling</h3>
+    <p>When we increase the number of samples per pixel, notice that the noise level drops significantly. When the sample rate is low, randomness mainly dominates the ray direction. With higher sample rates, the expectation of estimated light start to converge on the correct value.</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/spheres_1_4_6.png" width="300px" />
+                <figcaption align="middle">1 Sample per Pixel</figcaption>
+                <td align="middle">
+                <img src="images/spheres_2_4_6.png" width="300px" />
+                <figcaption align="middle">2 Sample per Pixel</figcaption>
+                <td align="middle">
+                <img src="images/spheres_4_4_6.png" width="300px" />
+                <figcaption align="middle">4 Sample per Pixel</figcaption>
+                <td align="middle">
+                <img src="images/spheres_8_4_6.png" width="300px" />
+                <figcaption align="middle">8 Sample per Pixel</figcaption>
+            </tr>
+            <tr>
+                <td align="middle">
+                <img src="images/spheres_16_4_6.png" width="300px" />
+                <figcaption align="middle">16 Sample per Pixel</figcaption>
+                <td align="middle">
+                <img src="images/spheres_64_4_6.png" width="300px" />
+                <figcaption align="middle">64 Sample per Pixel</figcaption>
+                <td align="middle">
+                <img src="images/spheres_1024_4_6.png" width="300px" />
+                <figcaption align="middle">1024 Sample per Pixel</figcaption>    
+
+            </tr>
+        </table>
+    </div>
+
+    <h2 align="middle">Part 5: Adaptive Sampling</h2>
+    <p>In the previous implementation of global illumination, we sample <code>num_sample</code> times for all the pixels indistinguishably. This could be introducing noise, since not all pixels are equally complex in terms of the way of being lit. We usually don't have to sample uniformly for all pixels. Some pixels converge faster with low sampling rates. So sometimes we have the right to exit and return the light evaluation sooner than finishing all the iterations.</p>
+    <p>Given the average of <i>n</i> evaluated spectrum intensity samples for a pixel as μ, and their standard deviation σ. We define I as</p>
+    <p align="middle"><pre align="middle">I = 1.96 * σ/sqrt(n)</pre></p>
+    <p>We check if</p>
+    <p align="middle"><pre align="middle">I <= maxTolerance * μ</pre></p>
+    <p>and if so, we break out the loop and store the current average as the estimated lighting, and current <i>n</i> as the sample count. We check if the condition is met every <code>sample_per_batch</code> samples and decide whether we can exit to cut down frequent checking.</p>
+    <h3>Result - 2048 Samples per Pixel, 1 Sample per Light, Max Ray Depth 6</h3>
+    <p>Sample Rays Per Batch = 64</p>
+    <p>maxTolerance = 0.05</p>
+    <div align="center">
+        <table style="width=100%">
+            <tr>
+                <td align="middle">
+                <img src="images/sphere_2048_p5.png" width="300px" />
+                <figcaption align="middle">Noise Free Sphere Scene</figcaption>
+                <td align="middle">
+                <img src="images/sphere_2048_p5_rate.png" width="300px" />
+                <figcaption align="middle">Sphere Scene Sample Rate</figcaption>
+            </tr>
+            <tr>
+                <td align="middle">
+                <img src="images/bunny_2048_1_m6.png" width="300px" />
+                <figcaption align="middle">Noise Free Bunny Scene</figcaption>
+                <td align="middle">
+                <img src="images/bunny_2048_1_m6_rate.png" width="300px" />
+                <figcaption align="middle">Bunny Scene Sample Rate</figcaption>
+            </tr>
+        </table>
+    </div>
+
 </div>
 </body>
 </html>

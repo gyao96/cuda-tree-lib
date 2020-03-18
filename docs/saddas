@@ -1,0 +1,13 @@
+./pathtracer -t 8 -s 1 -l 1 -H -m 0 -f CBbunny_H_1_1.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 4 -H -m 0 -f CBbunny_H_1_4.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 16 -H -m 0 -f CBbunny_H_1_16.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 64 -H -m 0 -f CBbunny_H_1_64.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 1 -m 0 -f CBbunny_1_1.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 4 -m 0 -f CBbunny_1_4.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 16 -m 0 -f CBbunny_1_16.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 8 -s 1 -l 64 -m 0 -f CBbunny_1_64.png -r 480 360 ../dae/sky/CBbunny.dae
+
+./pathtracer -t 16 -s 1024 -l 32 -m 1 -f CBbunny_1024_32_m1.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 16 -s 1024 -l 32 -m 2 -f CBbunny_1024_32_m2.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 16 -s 1024 -l 32 -m 3 -f CBbunny_1024_32_m3.png -r 480 360 ../dae/sky/CBbunny.dae
+./pathtracer -t 16 -s 1024 -l 32 -m 100 -f CBbunny_1024_32_m100.png -r 480 360 ../dae/sky/CBbunny.dae
