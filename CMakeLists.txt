@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(Assignment3)
+project(cuda-tree-lib LANGUAGES CXX CUDA)
 
 #-------------------------------------------------------------------------------
 # Build options
@@ -134,6 +134,10 @@ set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
 target_link_libraries(pathtracer PUBLIC OpenGL::GL)
 target_link_libraries(pathtracer PUBLIC OpenGL::GLU)
+
+find_package(CUDA 9.0 REQUIRED)
+message(STATUS "Found CUDA ${CUDA_VERSION_STRING} at ${CUDA_TOOLKIT_ROOT_DIR}")
+set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
 
 #-------------------------------------------------------------------------------
 # Add subdirectories
