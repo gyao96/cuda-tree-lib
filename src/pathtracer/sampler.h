@@ -46,6 +46,16 @@ class Sampler3D {
 
 }; // class Sampler3D
 
+/**
+ * A Sampler3D implementation with uniform distribution on unit sphere
+ */
+class UniformSphereSampler3D : public Sampler3D {
+public:
+
+  Vector3D get_sample() const;
+
+}; // class UniformHemisphereSampler3D
+
 
 /**
  * A Sampler2D implementation with uniform distribution on unit square

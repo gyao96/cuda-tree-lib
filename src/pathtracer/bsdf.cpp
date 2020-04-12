@@ -63,82 +63,10 @@ Spectrum DiffuseBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
   // After sampling a value for wi, it returns the evaluation of the BSDF
   // at (wo, *wi).
   // You can use the `f` function. The reference solution only takes two lines.
-    *wi = sampler.get_sample(pdf);
-    return f(wo, *wi);
-    //return Spectrum(1.0);
+
+  *wi = sampler.get_sample(pdf);
+  return reflectance / PI;
 }
-
-//===============================================================
-// Project 3-2 Code. Don't worry about these for project 3-1
-//===============================================================
-
-/**
- * Evalutate Mirror BSDF
- */
-Spectrum MirrorBSDF::f(const Vector3D &wo, const Vector3D &wi) {
-  // Project 3-2
-  return Spectrum();
-}
-
-/**
- * Evalutate Mirror BSDF
- */
-Spectrum MirrorBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Glossy BSDF
- */
-Spectrum GlossyBSDF::f(const Vector3D &wo, const Vector3D &wi) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Glossy BSDF
- */
-Spectrum GlossyBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Refraction BSDF
- */
-Spectrum RefractionBSDF::f(const Vector3D &wo, const Vector3D &wi) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Refraction BSDF
- */
-Spectrum RefractionBSDF::sample_f(const Vector3D &wo, Vector3D *wi,
-                                  float *pdf) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Glass BSDF
- */
-Spectrum GlassBSDF::f(const Vector3D &wo, const Vector3D &wi) {
-  return Spectrum();
-}
-
-/**
- * Evalutate Glass BSDF
- */
-Spectrum GlassBSDF::sample_f(const Vector3D &wo, Vector3D *wi, float *pdf) {
-  return Spectrum();
-}
-
-/**
- * Compute the reflection vector according to incident vector
- */
-void BSDF::reflect(const Vector3D &wo, Vector3D *wi) {}
-
-/**
- * Compute the refraction vector according to incident vector and ior
- */
-bool BSDF::refract(const Vector3D &wo, Vector3D *wi, float ior) { return true; }
 
 /**
  * Evalutate Emission BSDF (Light Source)

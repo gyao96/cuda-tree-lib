@@ -29,6 +29,8 @@ void usage(const char* binaryName) {
   printf("  -t  <INT>        Number of render threads\n");
   printf("  -m  <INT>        Maximum ray depth\n");
   printf("  -e  <PATH>       Path to environment map\n");
+  printf("  -b  <FLOAT>      The size of the aperture\n");
+  printf("  -d  <FLOAT>      The focal distance\n");
   printf("  -f  <FILENAME>   Image (.png) file to save output to in windowless mode\n");
   printf("  -r  <INT> <INT>  Width and height of output image (if windowless)\n");
   printf("  -h               Print this help message\n");
@@ -81,55 +83,62 @@ int main( int argc, char** argv ) {
   bool write_to_file = false;
   size_t w = 0, h = 0, x = -1, y = 0, dx = 0, dy = 0;
   string filename, cam_settings = "";
-  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:H:f:r:c:a:p:")) != -1 ) {  // for each option...
+  while ( (opt = getopt(argc, argv, "s:l:t:m:e:h:H:f:r:c:b:d:a:p:")) != -1 ) {  // for each option...
     switch ( opt ) {
-      case 'f':
-          write_to_file = true;
-          filename  = string(optarg);
-          break;
-      case 'r':
-          w = atoi(argv[optind-1]);
-          h = atoi(argv[optind]);
-          optind++;
-          break;
-      case 'p':
-          x = atoi(argv[optind-1]);
-          y = atoi(argv[optind-0]);
-          dx = atoi(argv[optind+1]);
-          dy = atoi(argv[optind+2]);
-          optind += 3;
-          break;
-      case 's':
-          config.pathtracer_ns_aa = atoi(optarg);
-          break;
-      case 'l':
-          config.pathtracer_ns_area_light = atoi(optarg);
-          break;
-      case 't':
-          config.pathtracer_num_threads = atoi(optarg);
-          break;
-      case 'm':
-          config.pathtracer_max_ray_depth = atoi(optarg);
-          break;
-      case 'e':
-          config.pathtracer_envmap = load_exr(optarg);
-          break;
-      case 'c':
-          cam_settings = string(optarg);
-          break;
-      case 'a':
-          config.pathtracer_samples_per_patch = atoi(argv[optind-1]);
-          config.pathtracer_max_tolerance = atof(argv[optind]);
-          optind++;
-          break;
-      case 'H':
-          config.pathtracer_direct_hemisphere_sample = true;
-          optind--;
-          break;
-      default:
-          usage(argv[0]);
-          return 1;
-      }
+    case 'f':
+      write_to_file = true;
+      filename  = string(optarg);
+      break;
+    case 'r':
+      w = atoi(argv[optind-1]);
+      h = atoi(argv[optind]);
+      optind++;
+      break;
+    case 'p':
+      x = atoi(argv[optind-1]);
+      y = atoi(argv[optind-0]);
+      dx = atoi(argv[optind+1]);
+      dy = atoi(argv[optind+2]);
+      optind += 3;
+      break;
+    case 's':
+      config.pathtracer_ns_aa = atoi(optarg);
+      break;
+    case 'l':
+      config.pathtracer_ns_area_light = atoi(optarg);
+      break;
+    case 't':
+      config.pathtracer_num_threads = atoi(optarg);
+      break;
+    case 'm':
+      config.pathtracer_max_ray_depth = atoi(optarg);
+      break;
+    case 'e':
+      std::cout << "[PathTracer] Loading environment map " << optarg << std::endl;
+      config.pathtracer_envmap = load_exr(optarg);
+      break;
+    case 'c':
+      cam_settings = string(optarg);
+      break;
+    case 'b':
+      config.pathtracer_lensRadius = atof(optarg);
+      break;
+    case 'd':
+      config.pathtracer_focalDistance = atof(optarg);
+      break;
+    case 'a':
+      config.pathtracer_samples_per_patch = atoi(argv[optind-1]);
+      config.pathtracer_max_tolerance = atof(argv[optind]);
+      optind++;
+      break;
+    case 'H':
+      config.pathtracer_direct_hemisphere_sample = true;
+      optind--;
+      break;
+    default:
+      usage(argv[0]);
+      return 1;
+    }
   }
 
   // print usage if no argument given
