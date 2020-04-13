@@ -883,12 +883,15 @@ void ColladaParser::parse_material ( XMLElement* xml, MaterialInfo& material ) {
           Spectrum reflectance = spectrum_from_string(string(e_reflectance->GetText()));
           BSDF* bsdf = new MirrorBSDF(reflectance);
           material.bsdf = bsdf;
-        } else if (type == "glossy") {
-          XMLElement *e_reflectance  = get_element(e_bsdf, "reflectance");
-          XMLElement *e_shininess = get_element(e_bsdf, "shininess");
-          Spectrum reflectance = spectrum_from_string(string(e_reflectance->GetText()));
-          float shininess = atof(e_shininess->GetText());
-          BSDF* bsdf = new GlossyBSDF(reflectance, shininess);
+        } else if (type == "microfacet") {
+          XMLElement* e_reflectance = get_element(e_bsdf, "reflectance");
+          XMLElement* e_alpha = get_element(e_bsdf, "alpha");
+          XMLElement* e_eta = get_element(e_bsdf, "eta");
+          XMLElement* e_k = get_element(e_bsdf, "k");
+          float alpha = atof(e_alpha->GetText());
+          Spectrum eta = spectrum_from_string(string(e_eta->GetText()));
+          Spectrum k = spectrum_from_string(string(e_k->GetText()));
+          BSDF* bsdf = new MicrofacetBSDF(eta, k, alpha);
           material.bsdf = bsdf;
         } else if (type == "refraction") {
           XMLElement *e_transmittance  = get_element(e_bsdf, "transmittance");

@@ -72,7 +72,9 @@ public:
              float max_tolerance = 0.05f,
              HDRImageBuffer* envmap = NULL,
              bool direct_hemisphere_sample = false,
-             string filename = "");
+             string filename = "",
+             double lensRadius = 0.25,
+             double focalDistance = 4.7);
 
   /**
    * Destructor.
@@ -124,6 +126,11 @@ public:
    * If the pathtracer is in READY, delete all internal data, transition to INIT.
    */
   void clear();
+
+  /**
+   * If the pathtracer is in RENDER, set the camera focal distance to the vector.
+   */
+  void autofocus(Vector2D loc);
 
   /**
    * If the pathtracer is in READY, transition to VISUALIZE.
@@ -207,6 +214,9 @@ public:
   size_t num_tiles_h;       ///< number of tiles along height of the image
 
   size_t frame_w, frame_h;
+
+  double lensRadius;
+  double focalDistance;
 
   // Components //
 

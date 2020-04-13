@@ -61,6 +61,11 @@ public:
     virtual void clear() = 0;
 
     /**
+     * If the pathtracer is in RENDER, set the camera focal distance to the vector.
+     */
+    virtual void autofocus(Vector2D loc) = 0;
+
+    /**
      * If the pathtracer is in READY, transition to VISUALIZE.
      */
     virtual void start_visualizing() = 0;

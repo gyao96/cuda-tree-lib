@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "CGL/misc.h"
+#include "CGL/vector2D.h"
 #include "CGL/vector3D.h"
 
 using std::cout;
@@ -194,7 +195,6 @@ void Camera::load_settings(string filename) {
  * \param x x-coordinate of the pixel in normalized image space
  * \param y y-coordinate of the pixel in normalized image space
  */
-inline double to_radian(double deg) { return deg * (PI / 180.0); }
 Ray Camera::generate_ray(double x, double y) const {
 
   // TODO (Part 1.2):
@@ -203,12 +203,14 @@ Ray Camera::generate_ray(double x, double y) const {
   // Note: hFov and vFov are in degrees.
   //
 
-    Vector3D sensorPos((x - 0.5) * tan(to_radian(hFov)), (y - 0.5) * tan(to_radian(vFov)), -1);
-    Vector3D sensorPosGlobal = c2w * sensorPos;
-    Ray ray(pos, sensorPosGlobal);
-    ray.max_t = fClip;
-    ray.min_t = nClip;
-    return ray;
+  double sensorX = (x - 0.5) * 2 * tan(hFov / 2 / 180 * PI);
+  double sensorY = (y - 0.5) * 2 * tan(vFov / 2 / 180 * PI);
+  Vector3D direction(sensorX, sensorY, -1);
+  direction = c2w * direction;
+  Ray ray(pos, direction / direction.norm());
+  ray.min_t = nClip;
+  ray.max_t = fClip;
+  return ray;
 }
 
 

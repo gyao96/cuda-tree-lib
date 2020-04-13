@@ -45,7 +45,9 @@ RaytracedRenderer::RaytracedRenderer(size_t ns_aa,
                        float max_tolerance,
                        HDRImageBuffer* envmap,
                        bool direct_hemisphere_sample,
-                       string filename) {
+                       string filename,
+                       double lensRadius,
+                       double focalDistance) {
   state = INIT;
 
   pt = new PathTracer();
@@ -59,6 +61,9 @@ RaytracedRenderer::RaytracedRenderer(size_t ns_aa,
   pt->samplesPerBatch = samples_per_batch;                  // Number of samples per batch
   pt->maxTolerance = max_tolerance;                         // Maximum tolerance for early termination
   pt->direct_hemisphere_sample = direct_hemisphere_sample;  // Whether to use direct hemisphere sampling vs. Importance Sampling
+
+  this->lensRadius = lensRadius;
+  this->focalDistance = focalDistance;
 
   this->filename = filename;
 
@@ -133,12 +138,13 @@ void RaytracedRenderer::set_camera(Camera *camera) {
     return;
   }
 
+  camera->focalDistance = focalDistance;
+  camera->lensRadius = lensRadius;
   this->camera = camera;
 
   if (has_valid_configuration()) {
     state = READY;
   }
-
 }
 
 /**
@@ -535,6 +541,22 @@ void RaytracedRenderer::key_press(int key) {
     pt->direct_hemisphere_sample = !pt->direct_hemisphere_sample;
     fprintf(stdout, "[PathTracer] Toggled direct lighting to %s\n", (pt->direct_hemisphere_sample ? "uniform hemisphere sampling" : "importance light sampling"));
     break;
+  case 'k': case 'K':
+    pt->camera->lensRadius = std::max(pt->camera->lensRadius - 0.05, 0.0);
+    fprintf(stdout, "[PathTracer] Camera lens radius reduced to %f.\n", pt->camera->lensRadius);
+    break;
+  case 'l': case 'L':
+    pt->camera->lensRadius = pt->camera->lensRadius + 0.05;
+    fprintf(stdout, "[PathTracer] Camera lens radius increased to %f.\n", pt->camera->lensRadius);
+    break;
+  case ';':
+    pt->camera->focalDistance = std::max(pt->camera->focalDistance - 0.1, 0.0);
+    fprintf(stdout, "[PathTracer] Camera focal distance reduced to %f.\n", pt->camera->focalDistance);
+    break;
+  case '\'':
+    pt->camera->focalDistance = pt->camera->focalDistance + 0.1;
+    fprintf(stdout, "[PathTracer] Camera focal distance increased to %f.\n", pt->camera->focalDistance);
+    break;
   case KEYBOARD_UP:
     if (current != bvh->get_root()) {
         selectionHistory.pop();
@@ -623,6 +645,10 @@ void RaytracedRenderer::raytrace_cell(ImageBuffer& buffer) {
       buffer.data[w*(y-tile_start_y)+(x-tile_start_x)] = frameBuffer.data[x+y*frame_w];
     }
   }
+}
+
+void RaytracedRenderer::autofocus(Vector2D loc) {
+  pt->autofocus(loc);
 }
 
 void RaytracedRenderer::worker_thread() {
