@@ -152,6 +152,39 @@
         </technique>
       </profile_COMMON>
     </effect>
+    <effect id="dragon-effect">
+      <profile_COMMON>
+        <technique sid="common">
+          <phong>
+            <emission>
+              <color sid="emission">0 0 0 1</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">0 0 0 1</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0.28 0.28 0.28 1</color>
+            </diffuse>
+            <specular>
+              <color sid="specular">0 0 0 1</color>
+            </specular>
+            <shininess>
+              <float sid="shininess">1</float>
+            </shininess>
+            <index_of_refraction>
+              <float sid="index_of_refraction">1</float>
+            </index_of_refraction>
+          </phong>
+        </technique>
+      </profile_COMMON>
+      <extra>
+        <technique profile="CGL">
+          <mirror>
+            <reflectance>1.0 0.8 0.4</reflectance>
+          </mirror>
+        </technique>
+      </extra>
+    </effect>
   </library_effects>
   <library_materials>
     <material id="Default-material" name="Default">

@@ -1,11 +1,18 @@
 cmake_minimum_required(VERSION 3.8)
-project(cuda-tree-lib LANGUAGES CXX CUDA)
+project(Assignment3)
 
 #-------------------------------------------------------------------------------
 # Build options
 #-------------------------------------------------------------------------------
 option(BUILD_DEBUG     "Build with debug settings"    OFF)
 option(BUILD_DOCS      "Build documentation"          OFF)
+option(BUILD_CUSTOM    "Build without reference"      OFF)
+
+if (MSVC)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D__SOLUTIONS__=50")
+else()
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__SOLUTIONS__=50")
+endif()
 
 set(BUILD_DEBUG ${BUILD_DEBUG} CACHE BOOL "Build debug" FORCE)
 
@@ -16,7 +23,23 @@ endif()
 #-------------------------------------------------------------------------------
 # Set target
 #-------------------------------------------------------------------------------
-set(APPLICATION_SOURCE
+set(APPLICATION_3_1_SOURCE
+
+    # Scene Object & Structure
+    src/scene/sphere.cpp
+    src/scene/triangle.cpp
+    src/scene/light.cpp
+    src/scene/bvh.cpp
+    src/scene/bbox.cpp
+
+    # Pathtracer
+    src/pathtracer/camera.cpp
+    src/pathtracer/bsdf.cpp
+    src/pathtracer/pathtracer.cpp
+)
+
+set(APPLICATION_3_2_SOURCE
+    src/scene/object.cpp
 
     # Collada Parser
     src/scene/collada/collada.cpp
@@ -31,28 +54,19 @@ set(APPLICATION_SOURCE
     src/scene/gl_scene/scene.cpp
     src/scene/gl_scene/sphere.cpp
 
-    # Scene Object & Structure
-    src/scene/sphere.cpp
-    src/scene/triangle.cpp
-    src/scene/object.cpp
-    src/scene/environment_light.cpp
-    src/scene/light.cpp
-    src/scene/bvh.cpp
-    src/scene/bbox.cpp
-
     # MeshEdit
     src/util/halfEdgeMesh.cpp
     src/application/meshEdit.cpp
 
-    # Pathtracer
-    src/pathtracer/camera.cpp
     src/pathtracer/sampler.cpp
-    src/pathtracer/bsdf.cpp
-    src/pathtracer/pathtracer.cpp
+    src/pathtracer/advanced_bsdf.cpp
+    src/scene/environment_light.cpp
+    src/pathtracer/camera_lens.cpp
     src/pathtracer/raytraced_renderer.cpp
 
     # misc
     src/util/sphere_drawing.cpp
+    src/util/lodepng.cpp
 
     # Application
     src/application/application.cpp
@@ -108,20 +122,50 @@ set(APPLICATION_HEADERS
     src/pathtracer/sampler.h
     # misc
     src/util/sphere_drawing.h
+    src/util/lodepng.h
     # Application
     src/application/application.h
     src/application/meshEdit.h
     src/application/renderer.h
 )
 
-if (WIN32)
-    list(APPEND APPLICATION_SOURCE src/util/win32/getopt.c)
+if (BUILD_CUSTOM)
+  add_executable(pathtracer ${APPLICATION_3_1_SOURCE} ${APPLICATION_3_2_SOURCE} ${APPLICATION_HEADERS})
+else()
+  add_executable(pathtracer ${APPLICATION_3_2_SOURCE} ${APPLICATION_HEADERS})
+  target_link_libraries(pathtracer PUBLIC pt31)
+
+  include(CGL/find_avx.cmake)
+  CHECK_FOR_AVX()
+
+  if(HAVE_AVX2_EXTENSIONS)
+    set(ARCHPREFIX libs/AVX2)
+  elseif(HAVE_AVX_EXTENSIONS)
+    set(ARCHPREFIX libs/AVX)
+  else()
+    set(ARCHPREFIX libs/SSE)
+  endif()
+
+  if (WIN32)
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(FATAL_ERROR "You should use Release profile on Windows, if you want to debug, set the configuration type to RelWithDebInfo in CMake settings")
+    else()
+      target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_msvc/release)
+    endif()
+  elseif (APPLE)
+    target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_apple)
+  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_linux)
+  else()
+    message(FATAL_ERROR "Unknown system!")
+  endif()
+
+  target_link_libraries(pathtracer PRIVATE pt31)
 endif()
 
-add_executable(pathtracer ${APPLICATION_SOURCE} ${APPLICATION_HEADERS})
 target_include_directories(pathtracer PUBLIC src)
 
-target_link_libraries(pathtracer PUBLIC CGL)
+set(CGL_INCLUDE_DIRS CGL/include CGL/deps/glew/include CGL/deps/glfw/include)
 
 #-------------------------------------------------------------------------------
 # Find dependencies
@@ -135,9 +179,7 @@ find_package(OpenGL REQUIRED)
 target_link_libraries(pathtracer PUBLIC OpenGL::GL)
 target_link_libraries(pathtracer PUBLIC OpenGL::GLU)
 
-find_package(CUDA 9.0 REQUIRED)
-message(STATUS "Found CUDA ${CUDA_VERSION_STRING} at ${CUDA_TOOLKIT_ROOT_DIR}")
-set(CUDA_LINK_LIBRARIES_KEYWORD PUBLIC)
+target_link_libraries(pathtracer PRIVATE CGL)
 
 #-------------------------------------------------------------------------------
 # Add subdirectories

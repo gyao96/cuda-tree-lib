@@ -125,6 +125,15 @@ public:
     return Vector3D(x * v.x, y * v.y, z * v.z);
 #endif
   }
+  
+  // element wise division
+  inline Vector3D operator/(const Vector3D& v) const {
+#ifdef __AVX__
+    return Vector3D(_mm_div_pd(__vec, v.__vec), _z / v._z);
+#else
+    return Vector3D(x / v.x, y / v.y, z / v.z);
+#endif
+  }
 
   // right scalar multiplication
   inline Vector3D operator*( const double& c ) const {
