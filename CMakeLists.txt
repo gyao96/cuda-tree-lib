@@ -5,25 +5,36 @@ project(Assignment3)
 # Build options
 #-------------------------------------------------------------------------------
 option(BUILD_DEBUG     "Build with debug settings"    OFF)
-option(BUILD_DOCS      "Build documentation"          OFF)
-option(BUILD_CUSTOM    "Build without reference"      ON)
 
-if (MSVC)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D__SOLUTIONS__=50")
-else()
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D__SOLUTIONS__=50")
-endif()
 
 set(BUILD_DEBUG ${BUILD_DEBUG} CACHE BOOL "Build debug" FORCE)
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 
 if (BUILD_DEBUG)
   set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 #-------------------------------------------------------------------------------
+# CUDA Setup
+#-------------------------------------------------------------------------------
+find_package(CUDA 10 REQUIRED)
+include(${CMAKE_MODULE_PATH}/CUDAComputesList.cmake)
+
+list(APPEND CUDA_NVCC_FLAGS ${CUDA_GENERATE_CODE})
+list(APPEND CUDA_NVCC_FLAGS_DEBUG "-g -G")
+set(CUDA_VERBOSE_BUILD ON)
+
+if(WIN32)
+    # Set up include and lib paths
+    set(CUDA_HOST_COMPILER ${CMAKE_CXX_COMPILER} CACHE FILEPATH "Host side compiler used by NVCC" FORCE)
+endif(WIN32)
+
+
+#-------------------------------------------------------------------------------
 # Set target
 #-------------------------------------------------------------------------------
-set(APPLICATION_3_1_SOURCE
+set(APPLICATION_SOURCE
 
     # Scene Object & Structure
     src/scene/sphere.cpp
@@ -36,9 +47,7 @@ set(APPLICATION_3_1_SOURCE
     src/pathtracer/camera.cpp
     src/pathtracer/bsdf.cpp
     src/pathtracer/pathtracer.cpp
-)
 
-set(APPLICATION_3_2_SOURCE
     src/scene/object.cpp
 
     # Collada Parser
@@ -71,6 +80,9 @@ set(APPLICATION_3_2_SOURCE
     # Application
     src/application/application.cpp
     src/application/main.cpp
+
+    src/util/win32/getopt.c
+    src/pathtracer/kernels.cu
 )
 
 set(APPLICATION_HEADERS
@@ -127,41 +139,13 @@ set(APPLICATION_HEADERS
     src/application/application.h
     src/application/meshEdit.h
     src/application/renderer.h
+    
+    src/util/win32/getopt.h
+    src/pathtracer/kernels.h
 )
 
-if (BUILD_CUSTOM)
-  add_executable(pathtracer ${APPLICATION_3_1_SOURCE} ${APPLICATION_3_2_SOURCE} ${APPLICATION_HEADERS})
-else()
-  add_executable(pathtracer ${APPLICATION_3_2_SOURCE} ${APPLICATION_HEADERS})
-  target_link_libraries(pathtracer PUBLIC pt31)
+ cuda_add_executable(pathtracer ${APPLICATION_SOURCE} ${APPLICATION_HEADERS})
 
-  include(CGL/find_avx.cmake)
-  CHECK_FOR_AVX()
-
-  if(HAVE_AVX2_EXTENSIONS)
-    set(ARCHPREFIX libs/AVX2)
-  elseif(HAVE_AVX_EXTENSIONS)
-    set(ARCHPREFIX libs/AVX)
-  else()
-    set(ARCHPREFIX libs/SSE)
-  endif()
-
-  if (WIN32)
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      message(FATAL_ERROR "You should use Release profile on Windows, if you want to debug, set the configuration type to RelWithDebInfo in CMake settings")
-    else()
-      target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_msvc/release)
-    endif()
-  elseif (APPLE)
-    target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_apple)
-  elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-    target_link_directories(pathtracer PRIVATE ${ARCHPREFIX}/x64_linux)
-  else()
-    message(FATAL_ERROR "Unknown system!")
-  endif()
-
-  target_link_libraries(pathtracer PRIVATE pt31)
-endif()
 
 target_include_directories(pathtracer PUBLIC src)
 
@@ -176,22 +160,14 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CGL_CXX_FLAGS}")
 
 set(OpenGL_GL_PREFERENCE LEGACY)
 find_package(OpenGL REQUIRED)
-target_link_libraries(pathtracer PUBLIC OpenGL::GL)
-target_link_libraries(pathtracer PUBLIC OpenGL::GLU)
+set(LIBRARIES OpenGL::GL OpenGL::GLU CGL)
 
-target_link_libraries(pathtracer PRIVATE CGL)
+target_link_libraries(pathtracer ${LIBRARIES})
 
 #-------------------------------------------------------------------------------
 # Add subdirectories
 #-------------------------------------------------------------------------------
 
-# build documentation
-if(BUILD_DOCS)
-  find_package(DOXYGEN)
-  if(DOXYGEN_FOUND AND BUILD_DOCS)
-    add_subdirectory(docs)
-  endif()
-endif()
 
 # Install settings
 set(CMAKE_INSTALL_PREFIX "${Assignment1_SOURCE_DIR}/")

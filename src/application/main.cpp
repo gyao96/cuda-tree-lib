@@ -15,6 +15,7 @@ typedef uint32_t gid_t;
 #else
 #include <unistd.h>
 #endif
+#include "pathtracer/kernels.h"
 
 using namespace std;
 using namespace CGL;
@@ -78,6 +79,7 @@ HDRImageBuffer* load_exr(const char* file_path) {
 
 int main( int argc, char** argv ) {
 
+    pathtraceInit();
   // get the options
   AppConfig config; int opt;
   bool write_to_file = false;
