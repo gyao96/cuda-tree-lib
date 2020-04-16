@@ -20,6 +20,8 @@ endif()
 #-------------------------------------------------------------------------------
 find_package(CUDA 10 REQUIRED)
 include(${CMAKE_MODULE_PATH}/CUDAComputesList.cmake)
+INCLUDE_DIRECTORIES( ${CUDA_INCLUDE_DIRS})
+link_directories(${CUDA_INCLUDE_DIRS}/../lib/x64)
 
 list(APPEND CUDA_NVCC_FLAGS ${CUDA_GENERATE_CODE})
 list(APPEND CUDA_NVCC_FLAGS_DEBUG "-g -G")
