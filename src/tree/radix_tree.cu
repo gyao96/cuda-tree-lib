@@ -2,6 +2,8 @@
 #include <ctime>
 #include <algorithm>
 #include <iostream>
+#include <thrust/sort.h>
+#include <thrust/device_ptr.h>
 #include "common.h"
 
 #define N_THREADS_PER_BLK 256
@@ -212,7 +214,7 @@ __global__ void check(RadixTree *tree, bool *res) {
 }
 
 
-const int N = 1000000, MAX = 10000000;
+const int N = 100000, MAX = 10000000;
 int arr[N];
 
 int main() {
@@ -223,12 +225,14 @@ int main() {
     for (int i = 0; i < N; ++i)
         if (i == 0 || arr[i] != arr[i - 1])
             arr[n++] = arr[i];
+    std::random_shuffle(arr, arr + n);
     std::cout << n << std::endl;
 
     bool res;
 
     // CPU version
     /*
+    std::sort(arr, arr + n);
     RadixTree tree;
     tree.init(n);
     tree.construct(arr);
@@ -247,9 +251,8 @@ int main() {
     cudaMemcpy(arr_dev, arr, n * sizeof(int), cudaMemcpyHostToDevice);
 
     init<<<1, 1>>>(tree_dev, n);
-
+    thrust::sort(thrust::device_ptr<int>(arr_dev), thrust::device_ptr<int>(arr_dev) + n);
     int nblks = min(64, (n + N_THREADS_PER_BLK - 1) / N_THREADS_PER_BLK);
-    // test<<<nblks, N_THREADS_PER_BLK>>>(arr_dev, n, res_dev);
     construct<<<nblks, N_THREADS_PER_BLK>>>(tree_dev, arr_dev);
     check<<<1, 1>>>(tree_dev, res_dev);
     cudaMemcpy(&res, res_dev, sizeof(bool), cudaMemcpyDeviceToHost);
