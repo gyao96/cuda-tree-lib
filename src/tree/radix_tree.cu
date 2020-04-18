@@ -4,33 +4,43 @@
 #include <iostream>
 #include <thrust/sort.h>
 #include <thrust/device_ptr.h>
-#include "radix_tree_tpl.h"
+#include "radix_tree_generic.h"
 
 #define N_THREADS_PER_BLK 256
 
 
-struct SimpleCodeGetter {
-    __host__ __device__ code_t operator()(int x) { return x; }
+class RadixTree : public RadixTreeGeneric<int, int> {
+protected:
+    __host__ __device__ code_t getCode(const int &x) const override {
+        return x;
+    }
+    __host__ __device__ int elementToValue(const int &x) const override {
+        return x;
+    }
+    __host__ __device__ void update(int &dst, const int &src) const override {
+        dst ^= src;
+    }
+    __device__ void atomicUpdate(int &dst, const int &src) const override {
+        atomicXor(&dst, src);
+    }
 };
 
-typedef RadixTree<int, SimpleCodeGetter> RadixTreeSimple;
 
-
-__global__  void init(RadixTreeSimple *tree, int n) {
+__global__  void init(RadixTree *tree, int n) {
     tree->init(n);
 }
-__global__ void construct(RadixTreeSimple *tree, int *arr) {
+__global__ void construct(RadixTree *tree, int *arr) {
     tree->construct(arr);
 }
-__global__ void destroy(RadixTreeSimple *tree) {
+__global__ void destroy(RadixTree *tree) {
     tree->destroy();
 }
-__global__ void check(RadixTreeSimple *tree, bool *res) {
+__global__ void check(RadixTree *tree, bool *res) {
     *res = tree->check();
 }
 
 
-const int N = 100000, MAX = 10000000;
+const int N = 10, MAX = 100;
 int arr[N];
 
 int main() {
@@ -49,7 +59,7 @@ int main() {
     // CPU version
     /*
     std::sort(arr, arr + n);
-    RadixTreeSimple tree;
+    RadixTree tree;
     tree.init(n);
     tree.construct(arr);
     res = tree.check();
@@ -60,10 +70,10 @@ int main() {
     // GPU version
     int *arr_dev;
     bool *res_dev;
-    RadixTreeSimple *tree_dev;
+    RadixTree *tree_dev;
     cudaMalloc(&arr_dev, n * sizeof(int));
     cudaMalloc(&res_dev, sizeof(bool));
-    cudaMalloc(&tree_dev, sizeof(RadixTreeSimple));
+    cudaMalloc(&tree_dev, sizeof(RadixTree));
     cudaMemcpy(arr_dev, arr, n * sizeof(int), cudaMemcpyHostToDevice);
 
     /*
@@ -76,8 +86,9 @@ int main() {
     destroy<<<1, 1>>>(tree_dev);
     */
 
-    RadixTreeWrapper<int, SimpleCodeGetter> tw(n);
+    RadixTreeWrapper<RadixTree> tw(n);
     tw.construct(arr_dev);
+    tw.print();
     res = tw.check();
 
     cudaDeviceSynchronize();
