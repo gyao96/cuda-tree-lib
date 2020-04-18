@@ -44,7 +44,7 @@ int main() {
     std::random_shuffle(arr, arr + n);
     std::cout << n << std::endl;
 
-    bool res;
+    bool res = false;
 
     // CPU version
     /*
@@ -66,18 +66,25 @@ int main() {
     cudaMalloc(&tree_dev, sizeof(RadixTreeSimple));
     cudaMemcpy(arr_dev, arr, n * sizeof(int), cudaMemcpyHostToDevice);
 
+    /*
     init<<<1, 1>>>(tree_dev, n);
     thrust::sort(thrust::device_ptr<int>(arr_dev), thrust::device_ptr<int>(arr_dev) + n);
     int nblks = min(64, (n + N_THREADS_PER_BLK - 1) / N_THREADS_PER_BLK);
     construct<<<nblks, N_THREADS_PER_BLK>>>(tree_dev, arr_dev);
     check<<<1, 1>>>(tree_dev, res_dev);
     cudaMemcpy(&res, res_dev, sizeof(bool), cudaMemcpyDeviceToHost);
-
     destroy<<<1, 1>>>(tree_dev);
+    */
+
+    RadixTreeWrapper<int, SimpleCodeGetter> tw(n);
+    tw.construct(arr_dev);
+    res = tw.check();
+
     cudaDeviceSynchronize();
     cudaCheckError();
     cudaFree(arr_dev);
     cudaFree(res_dev);
+    cudaFree(tree_dev);
 
     std::cout << (res ? "Success" : "Failed") << std::endl;
     return 0;

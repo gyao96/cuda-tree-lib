@@ -1,6 +1,8 @@
 #include <algorithm>
 #include <thrust/sort.h>
+#include <thrust/device_vector.h>
 #include <thrust/device_ptr.h>
+#include <thrust/copy.h>
 #include "common.h"
 
 
@@ -12,7 +14,7 @@ class RadixTreeNode {
 public:
     RadixTreeNode *left, *right, *parent;
     T element;
-    __host__ __device__ bool isLeaf() { return left == nullptr && right == nullptr; }
+    __host__ __device__ bool isLeaf() const { return left == nullptr && right == nullptr; }
 };
 
 
@@ -21,17 +23,18 @@ class RadixTree {
 public:
     RadixTreeNode<T> *root;
     __host__ __device__ void init(int count);
+    __host__ __device__ void init(int count, RadixTreeNode<T> *internals, RadixTreeNode<T> *leaves);
     __host__ __device__ void construct(T *buf);
     __host__ __device__ void destroy();
-    __host__ void print();
-    __host__ __device__ bool check() { return check(root, 0, count - 1); }
+    __host__ void print() const;
+    __host__ __device__ bool check() const { return check(root, 0, count - 1); }
 private:
     int count;
     RadixTreeNode<T> *internals, *leaves;
-    __host__ __device__ int lcp(const T &a, int i, const T &b, int j);
-    __host__ __device__ int lcp(int i, int j, T *buf);
-    __host__ __device__ bool check(RadixTreeNode<T> *p, int l, int r);
-    __host__ void printNode(RadixTreeNode<T> *p);
+    __host__ __device__ int lcp(const T &a, int i, const T &b, int j) const;
+    __host__ __device__ int lcp(int i, int j, T *buf) const;
+    __host__ __device__ bool check(const RadixTreeNode<T> *p, int l, int r) const;
+    __host__ void printNode(const RadixTreeNode<T> *p) const;
 };
 
 
@@ -49,6 +52,16 @@ void RadixTree<T, CodeGetter>::init(int count) {
         root = &internals[0];
         root->parent = nullptr;
     }
+}
+
+
+template <class T, class CodeGetter>
+void RadixTree<T, CodeGetter>::init(int count, RadixTreeNode<T> *internals, RadixTreeNode<T> *leaves) {
+    this->count = count;
+    this->internals = internals;
+    this->leaves = leaves;
+    root = &internals[0];
+    root->parent = nullptr;
 }
 
 
@@ -141,7 +154,7 @@ void RadixTree<T, CodeGetter>::construct(T *buf) {
 
 
 template <class T, class CodeGetter>
-int RadixTree<T, CodeGetter>::lcp(const T &a, int i, const T &b, int j) {
+int RadixTree<T, CodeGetter>::lcp(const T &a, int i, const T &b, int j) const {
     uint64_t x = ((uint64_t)CodeGetter()(a) << 32) | i;
     uint64_t y = ((uint64_t)CodeGetter()(b) << 32) | j;
 #ifdef __CUDA_ARCH__
@@ -154,13 +167,13 @@ int RadixTree<T, CodeGetter>::lcp(const T &a, int i, const T &b, int j) {
 }
 
 template <class T, class CodeGetter>
-int RadixTree<T, CodeGetter>::lcp(int i, int j, T *buf) {
+int RadixTree<T, CodeGetter>::lcp(int i, int j, T *buf) const {
     return lcp(buf[i], i, buf[j], j);
 }
 
 
 template <class T, class CodeGetter>
-void RadixTree<T, CodeGetter>::printNode(RadixTreeNode<T> *p) {
+void RadixTree<T, CodeGetter>::printNode(const RadixTreeNode<T> *p) const {
     if (p->isLeaf()) {
         printf("L%d", int(p - leaves));
     }
@@ -171,7 +184,7 @@ void RadixTree<T, CodeGetter>::printNode(RadixTreeNode<T> *p) {
 
 
 template <class T, class CodeGetter>
-void RadixTree<T, CodeGetter>::print() {
+void RadixTree<T, CodeGetter>::print() const {
     printf("Tree: %d elements\n", count);
     for (int i = 0; i < count - 1; ++i) {
         printf("\t");
@@ -190,7 +203,7 @@ void RadixTree<T, CodeGetter>::print() {
 
 
 template <class T, class CodeGetter>
-bool RadixTree<T, CodeGetter>::check(RadixTreeNode<T> *p, int l, int r) {
+bool RadixTree<T, CodeGetter>::check(const RadixTreeNode<T> *p, int l, int r) const {
     if (p == nullptr) return false;
     if (p->isLeaf()) {
         return l == r;
@@ -200,3 +213,85 @@ bool RadixTree<T, CodeGetter>::check(RadixTreeNode<T> *p, int l, int r) {
     for (; split < r - 1 && lcp(leaves[l].element, l, leaves[split + 1].element, split + 1) > lcp_this; ++split);
     return check(p->left, l, split) && check(p->right, split + 1, r);
 }
+
+
+
+// Wrapper for CUDA version
+
+template <class T, class CodeGetter>
+struct Comp {
+    __host__ __device__ bool operator()(const T &a, const T &b) {
+        return CodeGetter()(a) < CodeGetter()(b);
+    }
+};
+
+template <class T, class CodeGetter>
+__global__ void _init(RadixTree<T, CodeGetter> *tree, int count,
+        RadixTreeNode<T> *internals, RadixTreeNode<T> *leaves) {
+    tree->init(count, internals, leaves);
+}
+
+template <class T, class CodeGetter>
+__global__ void _construct(RadixTree<T, CodeGetter> *tree, T *buf) {
+    tree->construct(buf);
+}
+
+template <class T, class CodeGetter>
+__global__ void _check(const RadixTree<T, CodeGetter> *tree, bool *res) {
+    *res = tree->check();
+}
+
+template <class T, class CodeGetter>
+__global__ void _print(const RadixTree<T, CodeGetter> *tree) {
+    tree->print();
+}
+
+#define N_THREADS_PER_BLK 256
+
+template <class T, class CodeGetter>
+class RadixTreeWrapper {
+public:
+    RadixTreeWrapper(int count) : count(count), data_dev(nullptr),
+            internals_dev(nullptr), leaves_dev(nullptr), tree_dev(nullptr) {
+        cudaMalloc(&tree_dev, sizeof(RadixTree<T, CodeGetter>));
+        cudaMalloc(&data_dev, count * sizeof(T));
+        cudaMalloc(&internals_dev, (count - 1) * sizeof(RadixTreeNode<T>));
+        cudaMalloc(&leaves_dev, count * sizeof(RadixTreeNode<T>));
+        _init<<<1, 1>>>(tree_dev, count, internals_dev, leaves_dev);
+        cudaDeviceSynchronize();
+    }
+    ~RadixTreeWrapper() {
+        if (data_dev)
+            cudaFree(data_dev);
+        if (internals_dev)
+            cudaFree(internals_dev);
+        if (leaves_dev)
+            cudaFree(leaves_dev);
+        if (tree_dev)
+            cudaFree(tree_dev);
+    }
+    void construct(T *buf) {
+        thrust::copy(thrust::device_ptr<T>(buf), thrust::device_ptr<T>(buf) + count, thrust::device_ptr<T>(data_dev));
+        thrust::sort(thrust::device_ptr<T>(data_dev), thrust::device_ptr<T>(data_dev) + count, Comp<T, CodeGetter>());
+        int nblks = min(64, (count + N_THREADS_PER_BLK - 1) / N_THREADS_PER_BLK);
+        _construct<<<nblks, N_THREADS_PER_BLK>>>(tree_dev, data_dev);
+        cudaDeviceSynchronize();
+    }
+    bool check() const {
+        bool *res_dev;
+        cudaMalloc(&res_dev, sizeof(bool));
+        _check<<<1, 1>>>(tree_dev, res_dev);
+        bool res;
+        cudaMemcpy(&res, res_dev, sizeof(bool), cudaMemcpyDeviceToHost);
+        cudaFree(res_dev);
+        cudaDeviceSynchronize();
+        return res;
+    }
+    void print() const { _print<<<1, 1>>>(tree_dev); }
+    RadixTree<T, CodeGetter> *tree() { return tree_dev; }
+private:
+    int count;
+    RadixTree<T, CodeGetter> *tree_dev;
+    T *data_dev;
+    RadixTreeNode<T> *internals_dev, *leaves_dev;
+};
