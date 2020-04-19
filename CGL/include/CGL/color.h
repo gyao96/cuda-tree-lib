@@ -31,7 +31,7 @@ class Color {
    * \param g Value of the green chanel.
    * \param b Value of the blue chanel.
    */
-  Color( float r = 0, float g = 0, float b = 0 )
+  __QUALIFIER__ Color( float r = 0, float g = 0, float b = 0 )
       : r( r ), g( g ), b( b ) { }
 
   /**
@@ -39,52 +39,52 @@ class Color {
    * Initialize from array of 8-bit component values (RGB).
    * \param arr Array containing component values.
    */
-  Color( const unsigned char* arr );
+  __QUALIFIER__ Color( const unsigned char* arr );
 
   // Array-style access
-  float& operator[](int k) {
+  __QUALIFIER__ float& operator[](int k) {
     return (&r)[k];
   }
-  const float& operator[](int k) const {
+  __QUALIFIER__ const float& operator[](int k) const {
     return (&r)[k];
   }
 
   // Addition.
-  inline Color operator+( const Color& rhs ) const {
+  __QUALIFIER__ inline Color operator+( const Color& rhs ) const {
     return Color( r + rhs.r, g + rhs.g, b + rhs.b);
   }
 
-  inline Color& operator+=( const Color& rhs ) {
+  __QUALIFIER__ inline Color& operator+=( const Color& rhs ) {
     r += rhs.r; g += rhs.g; b += rhs.b;
     return *this;
   }
 
   // Vector multiplication.
-  inline Color operator*( const Color& rhs ) const {
+  __QUALIFIER__ inline Color operator*( const Color& rhs ) const {
     return Color( r * rhs.r, g * rhs.g, b * rhs.b);
   }
 
-  inline Color& operator*=( const Color& rhs ) {
+  __QUALIFIER__ inline Color& operator*=( const Color& rhs ) {
     r *= rhs.r; g *= rhs.g; b *= rhs.b;
     return *this;
   }
 
   // Scalar multiplication.
-  inline Color operator*( float s ) const {
+  __QUALIFIER__ inline Color operator*( float s ) const {
     return Color( r * s, g * s, b * s );
   }
 
-  inline Color& operator*=( float s ) {
+  __QUALIFIER__ inline Color& operator*=( float s ) {
     r *= s; g *= s; b *= s;
     return *this;
   }
 
   // comparison
-  inline bool operator==( const Color& rhs ) const {
+  __QUALIFIER__ inline bool operator==( const Color& rhs ) const {
     return r == rhs.r && g == rhs.g && b == rhs.b;
   }
 
-  inline bool operator!=( const Color& rhs ) const {
+  __QUALIFIER__ inline bool operator!=( const Color& rhs ) const {
     return !operator==( rhs );
   }
 
@@ -93,20 +93,20 @@ class Color {
    * component) ASCII string.
    * \return Color constructed from the input hex encoding.
    */
-  static Color fromHex( const char* s );
+  __QUALIFIER__ static Color fromHex( const char* s );
 
   /**
    * Returns a hexadecimal string #rrggbb encoding this color.
    * \return the hexadecimal encoding of the color.
    */
-  std::string toHex( ) const;
+  __QUALIFIER__ std::string toHex( ) const;
 
 
 }; // class Color
 
 
 // Commutable scalar multiplication.
-inline Color operator*( float s, const Color& c ) {
+__QUALIFIER__ inline Color operator*( float s, const Color& c ) {
   return c * s;
 }
 

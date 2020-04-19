@@ -7,6 +7,7 @@
 #include "CGL/CGL.h"
 
 #include "pathtracer/ray.h"
+#include "util/cuda.h"
 
 namespace CGL {
 
@@ -27,7 +28,7 @@ struct BBox {
    * The default constructor creates a new bounding box which contains no
    * points.
    */
-  BBox() {
+  __QUALIFIER__ BBox() {
     max = Vector3D(-INF_D, -INF_D, -INF_D);
     min = Vector3D( INF_D,  INF_D,  INF_D);
     extent = max - min;
@@ -37,7 +38,7 @@ struct BBox {
    * Constructor.
    * Creates a bounding box that includes a single point.
    */
-  BBox(const Vector3D& p) : min(p), max(p) { extent = max - min; }
+  __QUALIFIER__ BBox(const Vector3D& p) : min(p), max(p) { extent = max - min; }
 
   /**
    * Constructor.
@@ -45,14 +46,14 @@ struct BBox {
    * \param min the min corner
    * \param max the max corner
    */
-  BBox(const Vector3D& min, const Vector3D& max) :
+  __QUALIFIER__ BBox(const Vector3D& min, const Vector3D& max) :
        min(min), max(max) { extent = max - min; }
 
   /**
    * Constructor.
    * Creates a bounding box with given bounds (component wise).
    */
-  BBox(const double minX, const double minY, const double minZ,
+  __QUALIFIER__ BBox(const double minX, const double minY, const double minZ,
        const double maxX, const double maxY, const double maxZ) {
     min = Vector3D(minX, minY, minZ);
     max = Vector3D(maxX, maxY, maxZ);
@@ -66,13 +67,13 @@ struct BBox {
    * given input.
    * \param bbox the bounding box to be included
    */
-  void expand(const BBox& bbox) {
-    min.x = std::min(min.x, bbox.min.x);
-    min.y = std::min(min.y, bbox.min.y);
-    min.z = std::min(min.z, bbox.min.z);
-    max.x = std::max(max.x, bbox.max.x);
-    max.y = std::max(max.y, bbox.max.y);
-    max.z = std::max(max.z, bbox.max.z);
+  __QUALIFIER__ void expand(const BBox& bbox) {
+    min.x = fmin(min.x, bbox.min.x);
+    min.y = fmin(min.y, bbox.min.y);
+    min.z = fmin(min.z, bbox.min.z);
+    max.x = fmax(max.x, bbox.max.x);
+    max.y = fmax(max.y, bbox.max.y);
+    max.z = fmax(max.z, bbox.max.z);
     extent = max - min;
   }
 
@@ -83,17 +84,17 @@ struct BBox {
    * point.
    * \param p the point to be included
    */
-  void expand(const Vector3D& p) {
-    min.x = std::min(min.x, p.x);
-    min.y = std::min(min.y, p.y);
-    min.z = std::min(min.z, p.z);
-    max.x = std::max(max.x, p.x);
-    max.y = std::max(max.y, p.y);
-    max.z = std::max(max.z, p.z);
+  __QUALIFIER__ void expand(const Vector3D& p) {
+    min.x = fmin(min.x, p.x);
+    min.y = fmin(min.y, p.y);
+    min.z = fmin(min.z, p.z);
+    max.x = fmax(max.x, p.x);
+    max.y = fmax(max.y, p.y);
+    max.z = fmax(max.z, p.z);
     extent = max - min;
   }
 
-  Vector3D centroid() const {
+  __QUALIFIER__ Vector3D centroid() const {
     return (min + max) / 2;
   }
 
@@ -101,7 +102,7 @@ struct BBox {
    * Compute the surface area of the bounding box.
    * \return surface area of the bounding box.
    */
-  double surface_area() const {
+  __QUALIFIER__ double surface_area() const {
     if (empty()) return 0.0;
     return 2 * (extent.x * extent.z +
                 extent.x * extent.y +
@@ -115,7 +116,7 @@ struct BBox {
    * box of zero size (empty, or contains a single vertex) are considered
    * empty.
    */
-  bool empty() const {
+  __QUALIFIER__ bool empty() const {
     return min.x > max.x || min.y > max.y || min.z > max.z;
   }
 
@@ -126,7 +127,7 @@ struct BBox {
    * \param t0 lower bound of intersection time
    * \param t1 upper bound of intersection time
    */
-  bool intersect(const Ray& r, double& t0, double& t1) const;
+  __QUALIFIER__ bool intersect(const Ray& r, double& t0, double& t1) const;
 
   /**
    * Draw box wireframe with OpenGL.

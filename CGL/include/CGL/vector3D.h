@@ -56,19 +56,19 @@ public:
    * Constructor.
    * Initializes tp vector (0,0,0).
    */
-  Vector3D() : x(0.0), y(0.0), z(0.0) { }
+  __QUALIFIER__ Vector3D() : x(0.0), y(0.0), z(0.0) { }
 
   /**
    * Constructor.
    * Initializes to vector (x,y,z).
    */
-  Vector3D( double x, double y, double z) : x( x ), y( y ), z( z ) { }
+  __QUALIFIER__ Vector3D( double x, double y, double z) : x( x ), y( y ), z( z ) { }
 
   /**
    * Constructor.
    * Initializes to vector (c,c,c)
    */
-  Vector3D( double c ) : x( c ), y( c ), z( c ) { }
+  __QUALIFIER__ Vector3D( double c ) : x( c ), y( c ), z( c ) { }
 
   #ifdef __AVX__
   Vector3D( __m128d v, double z ) : __vec(v), _z(z) { }
@@ -78,29 +78,29 @@ public:
    * Constructor.
    * Initializes from existing vector
    */
-  Vector3D( const Vector3D& v ) : x( v.x ), y( v.y ), z( v.z ) { }
+  __QUALIFIER__ Vector3D( const Vector3D& v ) : x( v.x ), y( v.y ), z( v.z ) { }
 
   // returns reference to the specified component (0-based indexing: x, y, z)
-  inline double& operator[] ( const int& index ) {
+  __QUALIFIER__ inline double& operator[] ( const int& index ) {
     return ( &x )[ index ];
   }
 
   // returns const reference to the specified component (0-based indexing: x, y, z)
-  inline const double& operator[] ( const int& index ) const {
+  __QUALIFIER__ inline const double& operator[] ( const int& index ) const {
     return ( &x )[ index ];
   }
 
-  inline bool operator==( const Vector3D& v) const {
+  __QUALIFIER__ inline bool operator==( const Vector3D& v) const {
     return v.x == x && v.y == y && v.z == z;
   }
 
   // negation
-  inline Vector3D operator-( void ) const {
+  __QUALIFIER__ inline Vector3D operator-( void ) const {
     return Vector3D( -x, -y, -z );
   }
 
   // addition
-  inline Vector3D operator+( const Vector3D& v ) const {
+  __QUALIFIER__ inline Vector3D operator+( const Vector3D& v ) const {
 #ifdef __AVX__
     return Vector3D(_mm_add_pd(__vec, v.__vec), _z + v._z);
 #else
@@ -109,7 +109,7 @@ public:
   }
 
   // subtraction
-  inline Vector3D operator-( const Vector3D& v ) const {
+  __QUALIFIER__ inline Vector3D operator-( const Vector3D& v ) const {
 #ifdef __AVX__
     return Vector3D( _mm_sub_pd(__vec, v.__vec), _z - v._z );
 #else
@@ -118,7 +118,7 @@ public:
   }
 
   // element wise multiplication
-  inline Vector3D operator*(const Vector3D& v) const {
+  __QUALIFIER__ inline Vector3D operator*(const Vector3D& v) const {
 #ifdef __AVX__
     return Vector3D(_mm_mul_pd(__vec, v.__vec), _z * v._z);
 #else
@@ -127,7 +127,7 @@ public:
   }
   
   // element wise division
-  inline Vector3D operator/(const Vector3D& v) const {
+  __QUALIFIER__ inline Vector3D operator/(const Vector3D& v) const {
 #ifdef __AVX__
     return Vector3D(_mm_div_pd(__vec, v.__vec), _z / v._z);
 #else
@@ -136,18 +136,18 @@ public:
   }
 
   // right scalar multiplication
-  inline Vector3D operator*( const double& c ) const {
+  __QUALIFIER__ inline Vector3D operator*( const double& c ) const {
     return Vector3D( x * c, y * c, z * c );
   }
 
   // scalar division
-  inline Vector3D operator/( const double& c ) const {
+  __QUALIFIER__ inline Vector3D operator/( const double& c ) const {
     const double rc = 1.0 / c;
     return Vector3D( rc * x, rc * y, rc * z );
   }
 
   // addition / assignment
-  inline void operator+=( const Vector3D& v ) {
+  __QUALIFIER__ inline void operator+=( const Vector3D& v ) {
 #ifdef __AVX__
     __vec = _mm_add_pd(__vec, v.__vec);
     _z += v._z;
@@ -157,7 +157,7 @@ public:
   }
 
   // subtraction / assignment
-  inline void operator-=( const Vector3D& v ) {
+  __QUALIFIER__ inline void operator-=( const Vector3D& v ) {
 #ifdef __AVX__
     __vec = _mm_sub_pd(__vec, v.__vec);
     _z -= v._z;
@@ -167,19 +167,19 @@ public:
   }
 
   // scalar multiplication / assignment
-  inline void operator*=( const double& c ) {
+  __QUALIFIER__ inline void operator*=( const double& c ) {
     x *= c; y *= c; z *= c;
   }
 
   // scalar division / assignment
-  inline void operator/=( const double& c ) {
+  __QUALIFIER__ inline void operator/=( const double& c ) {
     (*this) *= ( 1./c );
   }
 
   /**
    * Returns per entry reciprocal
    */
-  inline Vector3D rcp(void) const {
+  __QUALIFIER__ inline Vector3D rcp(void) const {
 #ifdef __AVX__
     return Vector3D(_mm_div_pd(_mm_set1_pd(1.0), __vec), 1.0 / z);
 #else
@@ -190,7 +190,7 @@ public:
   /**
    * Returns Euclidean length.
    */
-  inline double norm( void ) const {
+  __QUALIFIER__ inline double norm( void ) const {
 #ifdef __AVX__
     return sqrt(norm2());
 #else
@@ -201,7 +201,7 @@ public:
   /**
    * Returns Euclidean length squared.
    */
-  inline double norm2( void ) const {
+  __QUALIFIER__ inline double norm2( void ) const {
 #ifdef __AVX__
     return _mm_cvtsd_f64(_mm_dp_pd(__vec, __vec, 0b00110001)) + z * z;
 #else
@@ -212,7 +212,7 @@ public:
   /**
    * Returns unit vector.
    */
-  inline Vector3D unit( void ) const {
+  __QUALIFIER__ inline Vector3D unit( void ) const {
     double rNorm = 1. / norm();
     return (*this) * rNorm;
   }
@@ -220,15 +220,15 @@ public:
   /**
    * Divides by Euclidean length.
    */
-  inline void normalize( void ) {
+  __QUALIFIER__ inline void normalize( void ) {
     (*this) /= norm();
   }
 
-  inline Color toColor() const {
+  __QUALIFIER__ inline Color toColor() const {
     return Color(r, g, b);
   }
 
-  inline float illum() const {
+  __QUALIFIER__ inline float illum() const {
     return 0.2126f * r + 0.7152f * g + 0.0722f * b;
   }
 
@@ -239,12 +239,12 @@ public:
 }; // class Vector3D
 
 // left scalar multiplication
-inline Vector3D operator* ( const double& c, const Vector3D& v ) {
+__QUALIFIER__ inline Vector3D operator* ( const double& c, const Vector3D& v ) {
   return Vector3D( c * v.x, c * v.y, c * v.z );
 }
 
 // left scalar divide
-inline Vector3D operator/(const double &c, const Vector3D &v) {
+__QUALIFIER__ inline Vector3D operator/(const double &c, const Vector3D &v) {
 #ifdef __AVX__
   return Vector3D(_mm_div_pd(_mm_set1_pd(c), v.__vec), c / v._z);
 #else
@@ -253,7 +253,7 @@ inline Vector3D operator/(const double &c, const Vector3D &v) {
 }
 
 // dot product (a.k.a. inner or scalar product)
-inline double dot( const Vector3D& u, const Vector3D& v ) {
+__QUALIFIER__ inline double dot( const Vector3D& u, const Vector3D& v ) {
 #ifdef __AVX__
   return _mm_cvtsd_f64(_mm_dp_pd(u.__vec, v.__vec, 0b00110001)) + u._z * v._z;
 #else
@@ -262,7 +262,7 @@ inline double dot( const Vector3D& u, const Vector3D& v ) {
 }
 
 // cross product
-inline Vector3D cross( const Vector3D& u, const Vector3D& v ) {
+__QUALIFIER__ inline Vector3D cross( const Vector3D& u, const Vector3D& v ) {
   return Vector3D( u.y*v.z - u.z*v.y,
                    u.z*v.x - u.x*v.z,
                    u.x*v.y - u.y*v.x );

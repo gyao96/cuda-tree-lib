@@ -14,6 +14,9 @@ protected:
     __host__ __device__ code_t getCode(const int &x) const override {
         return x;
     }
+    __host__ __device__ int startValue() const override {
+        return 0;
+    }
     __host__ __device__ int elementToValue(const int &x) const override {
         return x;
     }

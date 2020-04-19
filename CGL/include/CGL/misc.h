@@ -11,8 +11,13 @@ namespace CGL {
 #define PI (3.14159265358979323)
 #define EPS_D (0.00000000001)
 #define EPS_F (0.00001f)
+#ifdef __CUDA_ARCH__
+#define INF_D 1.7E308
+#define INF_F 3.4E38
+#else
 #define INF_D (std::numeric_limits<double>::infinity())
 #define INF_F (std::numeric_limits<float>::infinity())
+#endif
 
 // MOUSE INPUTS //
 #define MOUSE_LEFT     0

@@ -42,6 +42,7 @@ private:
     __host__ __device__ void printNode(const RadixTreeNode<T, V> *p) const;
 protected:
     __host__ __device__ virtual code_t getCode(const T &x) const = 0;
+    __host__ __device__ virtual V startValue() const = 0;
     __host__ __device__ virtual V elementToValue(const T &x) const = 0;
     __host__ __device__ virtual void update(V &dst, const V &src) const = 0;
     __device__ virtual void atomicUpdate(V &dst, const V &src) const { update(dst, src); }
@@ -117,10 +118,12 @@ void RadixTreeGeneric<T, V>::construct(T *buf) {
 
     for (int i = tid; i < count; i += delta) {
         leaves[i].element = buf[i];
+        leaves[i].value = elementToValue(leaves[i].element);
         leaves[i].left = leaves[i].right = nullptr;
     }
 
     for (int i = tid; i < count - 1; i += delta) {
+        internals[i].value = startValue();
         int d = (i == 0 ? 1 : lcp(i, i + 1, buf) - lcp(i, i - 1, buf));
         d = (d > 0 ? 1 : -1);
         int lcp_this = (i == 0 ? 0 : lcp(i, i - d, buf));
@@ -190,7 +193,6 @@ void RadixTreeGeneric<T, V>::populateValue() {
 #endif
 
     for (int i = tid; i < count; i += delta) {
-        leaves[i].value = elementToValue(leaves[i].element);
         for (RadixTreeNode<T, V> *p = leaves[i].parent; p != nullptr; p = p->parent) {
 #ifdef __CUDA_ARCH__
             atomicUpdate(p->value, leaves[i].value);

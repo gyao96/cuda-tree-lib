@@ -3,6 +3,7 @@
 
 #include "pathtracer/intersection.h"
 #include "scene/bbox.h"
+#include "util/cuda.h"
 
 namespace CGL { namespace SceneObjects {
 
@@ -18,7 +19,7 @@ class Primitive {
    * Get the world space bounding box of the primitive.
    * \return world space bounding box of the primitive
    */
-  virtual BBox get_bbox() const = 0;
+  __QUALIFIER__ virtual BBox get_bbox() const = 0;
 
   /**
    * Ray - Primitive intersection.
@@ -28,7 +29,7 @@ class Primitive {
    * \return true if the given ray intersects with the primitive,
              false otherwise
    */
-  virtual bool has_intersection(const Ray& r) const = 0;
+  __QUALIFIER__ virtual bool has_intersection(const Ray& r) const = 0;
 
   /**
    * Ray - Primitive intersection 2.
@@ -40,7 +41,7 @@ class Primitive {
    * \return true if the given ray intersects with the primitive,
              false otherwise
    */
-  virtual bool intersect(const Ray& r, Intersection* i) const = 0;
+  __QUALIFIER__ virtual bool intersect(const Ray& r, Intersection* i) const = 0;
 
   /**
    * Get BSDF.
@@ -48,7 +49,7 @@ class Primitive {
    * Note that the BSDFs are not stored in each primitive but in the
    * SceneObjects the primitive belongs to.
    */
-  virtual BSDF* get_bsdf() const = 0;
+  __QUALIFIER__ virtual BSDF* get_bsdf() const = 0;
 
   /**
    * Draw with OpenGL (for visualization)

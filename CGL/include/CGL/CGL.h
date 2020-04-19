@@ -2,6 +2,7 @@
 #define CGL_H
 
 #include "misc.h"
+#include "util/cuda.h"
 
 // CGL Forward Declarations //
 
