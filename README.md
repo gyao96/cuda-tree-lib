@@ -26,6 +26,7 @@ We will benchmark the performance of:
 - The time of constructing BVH for a scene with N primitives with CPU only and our CUDA implementation.
 - The time of rendering a single frame with CPU-based BVH construction and our method.
 - The time of rendering a sequence of frames with primitives moving in the scene. Compare between CPU-based BVH construction and our method.
+
 See [final report](https://raw.githubusercontent.com/gyao96/cuda-tree-lib/master/CS267_Final_Report.pdf) for performance benchmarking results
 ### Reference
 - Ize, Thiago, Ingo Wald, and Steven G. Parker. "Asynchronous BVH construction for ray tracing dynamic scenes on parallel multi-core architectures." In Proceedings of the 7th Eurographics conference on Parallel Graphics and Visualization, pp. 101-108. Eurographics Association, 2007.
